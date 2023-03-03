@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin')
+const packageJson = require('./package.json')
 
 module.exports = {
   lintOnSave: false,
@@ -12,7 +13,7 @@ module.exports = {
     },
     plugins: [
       new HtmlWebpackPlugin({
-        filename: 'mp_cl_lead_capture_tn_v2.html',
+        filename: packageJson.netsuite.htmlFile,
         template: 'public/index.html',  //template file to embed the source
         inlineSource: '.(js|css)$' // embed all javascript and css inline
       }),
