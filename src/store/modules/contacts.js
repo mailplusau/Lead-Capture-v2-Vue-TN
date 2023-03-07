@@ -1,6 +1,6 @@
 import getNSModules from '../../utils/ns-modules';
 
-// let localId = 1;
+let localId = 1;
 
 const state = {
     // For customer's contacts
@@ -21,9 +21,11 @@ const state = {
         title: '',
         company: null, // internal id of customer record
         entityid: '',
-        custentity_connect_admin: false,
-        custentity_connect_user: false,
+        custentity_connect_admin: '',
+        custentity_connect_user: '',
     },
+
+    hasRoleWithPortalAdminAccess: false,
 }
 
 const getters = {
@@ -33,6 +35,7 @@ const getters = {
     loading : state => state.contactLoading,
     modalTitle : state => state.contactModalTitle,
     form : state => state.contactForm,
+    hasRoleWithPortalAdminAccess : state => state.hasRoleWithPortalAdminAccess,
 }
 
 const mutations = {
@@ -49,6 +52,8 @@ const actions = {
         }
 
         _loadContacts(context, NS_MODULES);
+
+        _checkForAdminPortalRoles(context);
 
         context.state.contactLoading = false;
     },
@@ -79,9 +84,28 @@ const actions = {
                 context.state.contactForm.company = context.rootGetters['customer/internalId'];
 
                 _saveContactToNetSuite(NS_MODULES, context.rootGetters['customer/internalId'], context.state.contactForm);
-            } else context.state.contacts.push({...context.state.contactForm});
+            } else {
+
+                if (context.state.contactForm.internalid) { // we still have local id for these cibtacts to make it easy to edit them
+                    let index = context.state.contacts.findIndex(item => item.internalid === context.state.contactForm.internalid);
+                    context.state.contacts.splice(index, 1, {
+                        ...context.state.contactForm,
+                        internalid: context.state.addressSublistForm.internalid
+                    })
+                } else {
+                    context.state.contacts.push({
+                        ...context.state.contactForm,
+                        internalid: localId
+                    });
+
+                    localId++;
+                }
+
+            }
 
             _loadContacts(context, NS_MODULES);
+
+            _checkForAdminPortalRoles(context);
 
             context.state.contactFormBusy = false;
 
@@ -109,8 +133,6 @@ Portal User custentity_connect_user
 MPEX Contact custentity_mpex_contact
  **/
 function _loadContacts(context, NS_MODULES) {
-    console.log('loading contacts...')
-
     let contactSearch = NS_MODULES.search.load({
         id: 'customsearch_salesp_contacts',
         type: 'contact'
@@ -144,7 +166,6 @@ function _loadContacts(context, NS_MODULES) {
 
         return true;
     })
-    console.log(context.state.contacts)
 }
 
 function _saveContactToNetSuite(NS_MODULES, customerId, contactData) {
@@ -163,14 +184,25 @@ function _saveContactToNetSuite(NS_MODULES, customerId, contactData) {
     }
 
     for (let fieldId in contactData) {
-        if (fieldId === 'custentity_connect_admin' || fieldId === 'custentity_connect_user') {
-            if (!contactData[fieldId] || contactData[fieldId] === 3) continue;
+        if (fieldId === 'custentity_connect_admin' || fieldId === 'custentity_connect_user' || fieldId === 'internalid') {
+            if (!contactData[fieldId] || parseInt(contactData[fieldId]) === 3) continue;
         }
 
         contactRecord.setValue({fieldId, value: contactData[fieldId]});
     }
 
     contactRecord.save({ignoreMandatoryFields: true});
+}
+
+function _checkForAdminPortalRoles(context) {
+    context.state.hasRoleWithPortalAdminAccess = false;
+
+    for (let contact of context.state.contacts) {
+        if (parseInt(contact.custentity_connect_admin) === 1) {
+            context.state.hasRoleWithPortalAdminAccess = true;
+            break;
+        }
+    }
 }
 
 function _resetContactForm(context) {
