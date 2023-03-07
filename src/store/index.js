@@ -10,6 +10,7 @@ const state = {
     industries: [],
     leadSources: [],
     franchisees: [],
+    roles: [],
     statuses: [
         {value: 6, text: 'SUSPECT - New'},
         {value: 57, text: 'SUSPECT - Hot Lead'}
@@ -21,6 +22,7 @@ const getters = {
     industries : state => state.industries,
     leadSources : state => state.leadSources,
     franchisees : state => state.franchisees,
+    roles : state => state.roles,
     statuses : state => state.statuses,
 };
 
@@ -34,12 +36,15 @@ const actions = {
             await getNSModules();
             console.log('NS_MODULES found !');
             context.state.errorNoNSModules = false;
-            await Promise.allSettled([
-                context.dispatch('getIndustries'),
-                context.dispatch('getLeadSources'),
-                context.dispatch('getFranchisees'),
-            ])
-            context.dispatch('customer/init').then();
+            setTimeout(async () => {
+                await Promise.allSettled([
+                    context.dispatch('getIndustries'),
+                    context.dispatch('getLeadSources'),
+                    context.dispatch('getFranchisees'),
+                    context.dispatch('getRoles'),
+                ])
+                context.dispatch('customer/init').then();
+            }, 250)
         } catch (e) {
             console.log(e);
             context.state.errorNoNSModules = true;
@@ -68,6 +73,14 @@ const actions = {
 
         await _fetchDataForHtmlSelect(context.state.franchisees,
             'customsearch_salesp_franchisee', 'partner', 'internalId', 'companyname');
+    },
+    getRoles : async context => {
+        if (context.state.errorNoNSModules) return;
+
+        context.state.roles.splice(0);
+
+        await _fetchDataForHtmlSelect(context.state.roles,
+            'customsearch_salesp_contact_roles', 'contactrole', 'internalId', 'name');
     }
 };
 
