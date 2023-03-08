@@ -15,6 +15,17 @@ const state = {
         {value: 6, text: 'SUSPECT - New'},
         {value: 57, text: 'SUSPECT - Hot Lead'}
     ],
+    states: [
+        {value: 1, text: 'NSW'},
+        {value: 2, text: 'QLD'},
+        {value: 3, text: 'VIC'},
+        {value: 4, text: 'SA'},
+        {value: 5, text: 'TAS'},
+        {value: 6, text: 'ACT'},
+        {value: 7, text: 'WA'},
+        {value: 8, text: 'NT'},
+        {value: 9, text: 'NZ'},
+    ]
 };
 
 const getters = {
@@ -24,6 +35,7 @@ const getters = {
     franchisees : state => state.franchisees,
     roles : state => state.roles,
     statuses : state => state.statuses,
+    states : state => state.states,
 };
 
 const mutations = {

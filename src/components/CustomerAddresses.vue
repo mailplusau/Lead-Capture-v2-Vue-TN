@@ -1,0 +1,262 @@
+<template>
+    <div class="col-6">
+
+        <h1 class="text-center">Addresses</h1>
+        <h3 class="text-center" v-if="loading">Loading addresses...</h3>
+        <p class="text-danger" v-show="!!addressMissingWarningText" v-html="addressMissingWarningText"></p>
+        <div class="row justify-content-between align-items-center mb-2" v-for="(item, index) in addresses" :key="'entry' + index">
+            <div class="col-auto">
+                {{item.addr1 + ' ' + item.addr2 + ' ' + item.city + ' ' + item.state + ' ' + item.zip}}<br>
+                {{item.defaultshipping ? 'isShipping' : ''}}<br>
+                {{item.defaultbilling ? 'isBilling' : ''}}
+            </div>
+            <div class="col-auto">
+                <b-button size="sm" variant="link" @click="$store.dispatch('addresses/openAddressModal', item.internalid)">
+                    <b-icon icon="pencil"></b-icon>
+                </b-button>
+
+                <b-button size="sm" variant="link">
+                    <b-icon icon="trash" variant="danger"></b-icon>
+                </b-button>
+            </div>
+        </div>
+
+        <div class="row mb-2">
+            <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('addresses/openAddressModal')" :disabled="addressFormBusy || loading">Add A New Address</b-button>
+        </div>
+
+        <b-modal id="modal-address" centered v-model="addressModal" size="lg" static @hide="handleAddressModalHide">
+            <template slot="modal-header">
+                <h1 class="text-center">{{$store.getters['addresses/modalTitle']}}</h1>
+            </template>
+            <div class="row">
+                <div class="col-12 mb-3 text-start">
+                    <span v-show="(!$store.getters['addresses/billingAddressAdded'] || $store.getters['addresses/billingAddressAdded'] === addressSublistForm.internalid) && !addressSublistForm.defaultbilling" class="text-warning">
+                        At least 1 Billing Address required. Either make this a Billing Address or add one before submitting.<br>
+                    </span>
+                    <span v-show="(!$store.getters['addresses/shippingAddressAdded'] || $store.getters['addresses/shippingAddressAdded'] === addressSublistForm.internalid) && !addressSublistForm.defaultshipping" class="text-warning">
+                        At least 1 Shipping Address required. Either make this a Shipping Address or add one before submitting.<br>
+                    </span>
+                    <span v-show="$store.getters['addresses/billingAddressAdded'] && $store.getters['addresses/billingAddressAdded'] !== addressSublistForm.internalid && addressSublistForm.defaultbilling" class="text-danger">
+                        Warning! Another default billing address is already set. This will replace the former address as the new default billing address.<br>
+                    </span>
+                    <span v-show="$store.getters['addresses/shippingAddressAdded'] && $store.getters['addresses/shippingAddressAdded'] !== addressSublistForm.internalid && addressSublistForm.defaultshipping" class="text-danger">
+                        Warning! Another default shipping address is already set. This will replace the former address as the new default shipping address.<br>
+                    </span>
+                </div>
+                <div class="col-12 mb-3">
+                    <b-input-group prepend="Addressee (Company Name)">
+                        <b-form-input v-model="addressForm.addressee" v-validate="'required|min:5'" data-vv-name="company_name"
+                                      :class="errors.has('company_name') ? 'is-invalid' : ''" :disabled="addressFormBusy"></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('company_name')">{{ errors.first('company_name') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-5 mb-3">
+                    <b-input-group prepend="Address Type">
+                        <b-form-select v-model="addressType" :options="$store.getters['addresses/types']" :disabled="addressFormBusy"></b-form-select>
+                    </b-input-group>
+                </div>
+                <div class="col-7 mb-3">
+                    <b-input-group :prepend="addressType === 'street' ? 'Suite/Level/Unit' : 'Postal Box'">
+                        <b-form-input v-validate="addressType === 'postal' ? 'required' : ''" data-vv-name="address_1"
+                                      :class="errors.has('address_1') ? 'is-invalid' : ''"
+                                      v-model="addressForm.addr1" :disabled="addressFormBusy"></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('address_1')">{{ errors.first('address_1') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-12 mb-3" v-if="addressType === 'street'">
+                    <b-input-group prepend="Street No. & Name">
+                        <GoogleAutocomplete v-model="addressForm.addr2" :disabled="addressFormBusy" id="address2" @placeChanged="handlePlaceChanged"/>
+
+                        <b-form-invalid-feedback :state="isAddressValid">
+                            Please fill in address and use autocomplete.
+                        </b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-3 mb-3" v-if="addressType === 'postal'">
+                    <b-input-group prepend="State">
+                        <b-form-select v-model="postalState" :options="$store.getters['states']" :disabled="addressFormBusy"></b-form-select>
+                    </b-input-group>
+                </div>
+                <div class="col-9 mb-3" v-if="addressType === 'postal'">
+                    <b-input-group prepend="Postal Location">
+                        <b-form-select v-model="addressForm.custrecord_address_ncl" :options="$store.getters['addresses/postalLocations']" :disabled="addressFormBusy"></b-form-select>
+                    </b-input-group>
+                </div>
+                <div class="col-4 mb-3">
+                    <b-input-group prepend="City">
+                        <b-form-input v-validate="'required'" data-vv-name="suburb" :class="errors.has('suburb') ? 'is-invalid' : ''"
+                                      v-model="addressForm.city" placeholder="to be autofilled" readonly></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('suburb')">{{ errors.first('suburb') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-4 mb-3" v-if="addressType === 'street'">
+                    <b-input-group prepend="State">
+                        <b-form-input v-validate="'required'" data-vv-name="state" :class="errors.has('state') ? 'is-invalid' : ''"
+                                      v-model="addressForm.state" placeholder="to be autofilled" readonly></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('state')">{{ errors.first('state') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div :class="(addressType === 'street' ? 'col-4' : 'col-8') + ' mb-3'">
+                    <b-input-group :prepend="'Postcode' + (addressType === 'postal' ? '/Mailing code' : '')">
+                        <b-form-input v-validate="'required'" data-vv-name="post_code" :class="errors.has('post_code') ? 'is-invalid' : ''"
+                                      v-model="addressForm.zip" :placeholder="addressType === 'street' ? 'to be autofilled' : ''" :readonly="addressType === 'street'"></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('post_code')">{{ errors.first('post_code') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-6 mb-3">
+                    <b-input-group prepend="Lat">
+                        <b-form-input v-validate="'required'" data-vv-name="latitude" :class="errors.has('latitude') ? 'is-invalid' : ''"
+                                      v-model="addressForm.custrecord_address_lat" placeholder="to be autofilled" readonly></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('latitude')">{{ errors.first('latitude') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-6 mb-3">
+                    <b-input-group prepend="Lng">
+                        <b-form-input v-validate="'required'" data-vv-name="longitude" :class="errors.has('longitude') ? 'is-invalid' : ''"
+                                      v-model="addressForm.custrecord_address_lon" placeholder="to be autofilled" readonly></b-form-input>
+
+                        <b-form-invalid-feedback :state="!errors.has('longitude')">{{ errors.first('longitude') }}</b-form-invalid-feedback>
+                    </b-input-group>
+                </div>
+                <div class="col-6">
+                    <b-form-checkbox id="checkbox-1" v-model="addressSublistForm.defaultshipping" name="checkbox-1"
+                        :value="true" :unchecked-value="false" :disabled="addressFormBusy">
+                        Default Shipping
+                    </b-form-checkbox>
+                </div>
+                <div class="col-6">
+                    <b-form-checkbox id="checkbox-2" v-model="addressSublistForm.defaultbilling" name="checkbox-2"
+                        :value="true" :unchecked-value="false" :disabled="addressFormBusy">
+                        Default Billing
+                    </b-form-checkbox>
+                </div>
+            </div>
+
+            <template slot="modal-footer">
+                <b-button size="sm" :disabled="addressFormBusy" @click="addressModal = false">Cancel</b-button>
+                <b-button size="sm" variant="success" :disabled="addressFormBusy || !isAddressValid"
+                          @click="saveAddressForm">
+                    {{addressFormBusy ? 'Please wait' : 'Save'}}
+                    <b-spinner type="grow" v-show="addressFormBusy" style="width:1rem;height:0.1rem"></b-spinner>
+                </b-button>
+            </template>
+        </b-modal>
+
+
+    </div>
+</template>
+
+<script>
+import GoogleAutocomplete from "./GoogleAutocomplete";
+
+export default {
+    name: "CustomerAddresses",
+    components: {GoogleAutocomplete},
+    data: () => ({
+        isAddressValid: true,
+        postalLocationInternalId: '',
+    }),
+    methods: {
+        // TODO: Add validation
+        saveAddressForm() {
+            console.log(this.addressForm)
+            this.$validator.validateAll().then((result) => {
+                if (result) {
+                    // eslint-disable-next-line
+                    console.log('Form Submitted!');
+                    this.$store.dispatch('addresses/saveAddressForm');
+                    this.postalLocationInternalId = '';
+                    return;
+                }
+
+                console.log('Correct them errors!');
+            });
+        },
+        handleAddressModalHide(event) {
+            if(this.addressFormBusy) event.preventDefault();
+        },
+        handlePlaceChanged(place) {
+            this.$store.commit('addresses/handleAddressFormChange', place);
+        },
+    },
+    computed: {
+        addresses() {
+            return this.$store.getters['addresses/all'];
+        },
+        addressForm() {
+            return this.$store.getters['addresses/form'];
+        },
+        addressSublistForm() {
+            return this.$store.getters['addresses/sublistForm'];
+        },
+        loading() {
+            return this.$store.getters['addresses/loading'];
+        },
+        addressFormBusy() {
+            return this.$store.getters['addresses/formBusy'];
+        },
+        addressModal: {
+            get() {
+                return this.$store.getters['addresses/modal'];
+            },
+            set(val) {
+                this.$store.commit('addresses/setModal', val);
+            }
+        },
+        addressType: {
+            get() {
+                return this.$store.getters['addresses/type'];
+            },
+            set(val) {
+                this.$store.commit('addresses/setType', val);
+            }
+        },
+        addressMissingWarningText() {
+            let str = '';
+            let control = 0;
+
+            if (!this.$store.getters['addresses/shippingAddressAdded']) {
+                str += '<b>1 default shipping</b>';
+                control++;
+            }
+
+            if (!this.$store.getters['addresses/billingAddressAdded']) {
+                str += (control ? ' and ' : '') + '<b>1 default billing</b>';
+                control++;
+            }
+
+            if (control) str += ' address required!';
+
+            return str;
+        },
+        postalState: {
+            get() {
+                return this.$store.getters['addresses/postalState'];
+            },
+            set(val) {
+                this.$store.commit('addresses/setPostalState', val);
+            }
+        }
+    },
+    watch: {
+        postalState(val) {
+            this.postalLocationInternalId = '';
+            this.$store.dispatch('addresses/handlePostalStateChanged', val);
+        },
+        'addressForm.custrecord_address_ncl': function (val) {
+            this.$store.dispatch('addresses/handlePostalLocationChanged', val);
+        }
+    }
+}
+</script>
+
+<style scoped>
+
+</style>
