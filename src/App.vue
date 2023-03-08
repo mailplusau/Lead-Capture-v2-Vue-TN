@@ -2,24 +2,26 @@
     <div id="app" class="container">
         <CustomerDetails ref="customerDetails"/>
 
-        <div class="row">
-            <div class="col-6">
+        <div class="row justify-content-center align-items-stretch mt-3">
+            <CustomerAddresses />
 
-            </div>
+            <CustomerContacts />
         </div>
 
-        <div class="row" v-if="!!$store.getters['customer/internalId']">
-            <b-button block @click="saveCustomer">Save</b-button>
+        <div class="row mt-4" v-if="!$store.getters['customer/internalId'] && !$store.getters['customer/busy']">
+            <b-button block @click="saveNewCustomer" variant="success">Save</b-button>
         </div>
     </div>
 </template>
 
 <script>
 import CustomerDetails from "./components/CustomerDetails";
+import CustomerAddresses from "./components/CustomerAddresses";
+import CustomerContacts from "./components/CustomerContacts";
 
 export default {
     name: 'App',
-    components: {CustomerDetails},
+    components: {CustomerContacts, CustomerAddresses, CustomerDetails},
     async beforeCreate() {
         await this.$store.dispatch('init');
     },
@@ -38,7 +40,7 @@ export default {
                 }
             });
         },
-        saveCustomer() {
+        saveNewCustomer() {
             this.$refs.customerDetails.commitDetails();
         }
     }
@@ -54,4 +56,18 @@ export default {
     color: #2c3e50;
     margin-top: 60px;
 }
+.custom-select {
+    position: relative;
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+    font-size: 13px;
+}
+.pac-container {
+    z-index: 1100 !important;
+}
+body.modal-open {
+    overflow: hidden !important;
+}
+
 </style>

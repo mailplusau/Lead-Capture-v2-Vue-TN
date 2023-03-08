@@ -85,17 +85,13 @@
             </b-input-group>
         </div>
         <div class="col-12 mb-4" v-if="hasInternalId">
-            <b-button @click="editForm" v-if="formDisabled" :disabled="busy">Edit Customer's Details</b-button>
+            <b-button @click="editForm" v-if="formDisabled" :disabled="busy" variant="outline-primary">Edit Customer's Details</b-button>
             <template v-else>
                 <b-button @click="resetForm" class="mx-2" :disabled="busy">Reset</b-button>
-                <b-button @click="cancelEditing" class="mx-2" :disabled="busy">Cancel</b-button>
-                <b-button @click="saveForm" class="mx-2" :disabled="busy">Save</b-button>
+                <b-button @click="cancelEditing" class="mx-2" :disabled="busy" variant="outline-danger">Cancel</b-button>
+                <b-button @click="saveForm" class="mx-2" :disabled="busy" variant="outline-success">Save</b-button>
             </template>
         </div>
-
-        {{ $store.getters['customer/details'] }}
-        <br>
-        {{ $store.getters['customer/detailForm'] }}
     </div>
 </template>
 
@@ -123,7 +119,16 @@ export default {
             this.$store.commit('customer/disableDetailForm');
         },
         saveForm() {
-            this.$store.dispatch('customer/saveCustomer');
+            this.$validator.validateAll().then((result) => {
+                if (result) {
+                    // eslint-disable-next-line
+                    console.log('Form Submitted!');
+                    this.$store.dispatch('customer/saveCustomer');
+                    return;
+                }
+
+                console.log('Correct them errors!');
+            });
         }
     },
     computed: {
@@ -144,10 +149,5 @@ export default {
 </script>
 
 <style scoped>
-    .custom-select {
-        position: relative;
-        flex: 1 1 auto;
-        width: 1%;
-        min-width: 0;
-    }
+
 </style>
