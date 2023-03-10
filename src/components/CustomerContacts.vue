@@ -175,18 +175,24 @@ export default {
     },
     watch: {
         'contactForm.contactrole': function (val) {
-            this.msg = '';
+            let p1, p2 = '';
             if ([5, 6, 8].includes(parseInt(val))) { // if role is Mail/Parcel Operator, MPEX contact or Product Contact
-                this.contactForm.custentity_connect_user = 1; // then set Portal User to Yes (1)
-                this.msg += 'This role will be set as Portal User';
+                if (this.contactForm.custentity_connect_user !== 1) {
+                    this.contactForm.custentity_connect_user = 1; // then set Portal User to Yes (1)
+                    // this.msg += 'This role will be set as Portal User';
+                    p1 = 'Portal User';
+                }
 
                 // and if there's no contact set as Portal Admin (1), set this to Yes as well
                 if (!this.$store.getters['contacts/hasRoleWithPortalAdminAccess']) {
                     this.contactForm.custentity_connect_admin = 1;
-                    this.msg += ' as well as Portal Admin (since there is no other role with Portal Admin access)';
+                    p2 = 'Portal Admin (since there is no other role with Portal Admin access)';
                 }
 
-                this.msg += '.';
+                this.msg = (p1 || p2 ? 'This role will be set as ' : '') +
+                    (p1 || '') +
+                    (p1 && p2 ? ' as well as ' : '') + (p2 || '') +
+                    (p1 || p2 ? '. Click Save to accept this change.' : '');
             }
         }
     }
