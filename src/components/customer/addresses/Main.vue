@@ -1,32 +1,17 @@
 <template>
-    <div class="col-6">
+    <div class="col-12">
 
         <h1 class="text-center">Addresses</h1>
         <h3 class="text-center" v-if="loading">Loading addresses...</h3>
         <p class="text-danger" v-show="!!addressMissingWarningText" v-html="addressMissingWarningText"></p>
-        <div class="row justify-content-between align-items-center mb-2" v-for="(item, index) in addresses" :key="'entry' + index">
-            <div class="col-auto">
-                {{item.addr1 + ' ' + item.addr2 + ' ' + item.city + ' ' + item.state + ' ' + item.zip}}<br>
-                {{item.defaultshipping ? 'isShipping' : ''}}<br>
-                {{item.defaultbilling ? 'isBilling' : ''}}
-            </div>
-            <div class="col-auto">
-                <b-button size="sm" variant="link" @click="$store.dispatch('addresses/openAddressModal', item.internalid)">
-                    <b-icon icon="pencil"></b-icon>
-                </b-button>
-
-                <b-button size="sm" variant="link">
-                    <b-icon icon="trash" variant="danger"></b-icon>
-                </b-button>
-            </div>
-        </div>
+        <AddressTable />
 
         <div class="row mb-2">
             <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('addresses/openAddressModal')" :disabled="addressFormBusy || loading">Add A New Address</b-button>
         </div>
 
         <b-modal id="modal-address" centered v-model="addressModal" size="lg" static @hide="handleAddressModalHide">
-            <template slot="modal-header">
+            <template v-slot:modal-header>
                 <h1 class="text-center">{{$store.getters['addresses/modalTitle']}}</h1>
             </template>
             <div class="row">
@@ -139,7 +124,7 @@
                 </div>
             </div>
 
-            <template slot="modal-footer">
+            <template v-slot:modal-footer>
                 <b-button size="sm" :disabled="addressFormBusy" @click="addressModal = false">Cancel</b-button>
                 <b-button size="sm" variant="success" :disabled="addressFormBusy || !isAddressValid"
                           @click="saveAddressForm">
@@ -154,14 +139,14 @@
 </template>
 
 <script>
-import GoogleAutocomplete from "./GoogleAutocomplete";
+import GoogleAutocomplete from "../../GoogleAutocomplete";
+import AddressTable from "./AddressTableV2";
 
 export default {
-    name: "CustomerAddresses",
-    components: {GoogleAutocomplete},
+    name: "Main",
+    components: {AddressTable, GoogleAutocomplete},
     data: () => ({
         isAddressValid: true,
-        postalLocationInternalId: '',
     }),
     methods: {
         // TODO: Add validation
@@ -172,7 +157,6 @@ export default {
                     // eslint-disable-next-line
                     console.log('Form Submitted!');
                     this.$store.dispatch('addresses/saveAddressForm');
-                    this.postalLocationInternalId = '';
                     return;
                 }
 
@@ -187,9 +171,6 @@ export default {
         },
     },
     computed: {
-        addresses() {
-            return this.$store.getters['addresses/all'];
-        },
         addressForm() {
             return this.$store.getters['addresses/form'];
         },
@@ -247,7 +228,6 @@ export default {
     },
     watch: {
         postalState(val) {
-            this.postalLocationInternalId = '';
             this.$store.dispatch('addresses/handlePostalStateChanged', val);
         },
         'addressForm.custrecord_address_ncl': function (val) {

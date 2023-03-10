@@ -16,7 +16,7 @@
 
 <script>
 import CustomerDetails from "./components/CustomerDetails";
-import CustomerAddresses from "./components/CustomerAddresses";
+import CustomerAddresses from "./components/customer/addresses/Main";
 import CustomerContacts from "./components/CustomerContacts";
 
 export default {
