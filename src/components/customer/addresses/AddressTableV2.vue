@@ -1,6 +1,6 @@
 <template>
     <div class="row">
-        <div class="col-lg-6 col-12">
+        <div class="col-12">
 
             <b-table :items="addresses" :fields="fields" striped responsive="sm" head-row-variant="light" hover :busy="$store.getters['addresses/loading']">
                 <template v-slot:table-busy>
@@ -31,8 +31,8 @@
                             <b-icon icon="trash" variant="danger"></b-icon>
                         </b-button>
 
-                        <b-button size="sm" @click="toggleDetails" variant="outline-primary" class="mx-2">
-                            {{ detailsShowing ? 'Hide' : 'Show'}} Details
+                        <b-button size="sm" variant="link" @click="toggleDetails">
+                            <b-icon :icon="detailsShowing ? 'chevron-contract' : 'chevron-expand'"></b-icon>
                         </b-button>
                     </div>
                 </template>

@@ -190,6 +190,8 @@ const actions = {
         context.state.addressFormBusy = true;
 
         setTimeout(async () => {
+            _setAddressLabel(context.state.addressSublistForm) // Set address label for current address in the form
+
             if (context.rootGetters['customer/internalId']) { // Existing customer, we just add new or edit existing address
                 let NS_MODULES = await getNSModules();
 
@@ -203,11 +205,17 @@ const actions = {
             } else { // New customer, save their addresses to the in-memory array for now
                 if (context.state.addressSublistForm.defaultshipping && context.state.shippingAddressAdded !== context.state.addressSublistForm.internalid) {
                     let index = context.state.addresses.findIndex(item => item.internalid === context.state.shippingAddressAdded);
-                    if (index >= 0) context.state.addresses[index].defaultshipping = false;
+                    if (index >= 0) {
+                        context.state.addresses[index].defaultshipping = false;
+                        _setAddressLabel(context.state.addresses[index]); // Update label because default shipping address is changed
+                    }
                 }
                 if (context.state.addressSublistForm.defaultbilling && context.state.billingAddressAdded !== context.state.addressSublistForm.internalid) {
                     let index = context.state.addresses.findIndex(item => item.internalid === context.state.billingAddressAdded);
-                    if (index >= 0) context.state.addresses[index].defaultbilling = false;
+                    if (index >= 0) {
+                        context.state.addresses[index].defaultbilling = false;
+                        _setAddressLabel(context.state.addresses[index]); // Update label because default billing address is changed
+                    }
                 }
 
                 if (context.state.addressSublistForm.internalid) { // we still have local id for these addresses to make it easy to edit them
@@ -392,8 +400,18 @@ function _saveAddressToNetSuite(NS_MODULES, context, customerId, addressData) {
 }
 
 function _updateDefaultShippingAndBillingAddress(NS_MODULES, context, customerId, addressSublistForm) {
+    let updateAddressLabel = (record) => { // this function is the same as _setAddressLabel() but apply directly on NS record
+        if (record.getCurrentSublistValue({sublistId: 'addressbook', fieldId: 'defaultshipping'})) {
+            record.setCurrentSublistValue({sublistId: 'addressbook', fieldId: 'label', value: 'Site Address'});
+        } else if (record.getCurrentSublistValue({sublistId: 'addressbook', fieldId: 'defaultbilling'})) {
+            record.setCurrentSublistValue({sublistId: 'addressbook', fieldId: 'label', value: 'Billing Address'});
+        } else if (record.getCurrentSublistValue({sublistId: 'addressbook', fieldId: 'isresidential'})) {
+            record.setCurrentSublistValue({sublistId: 'addressbook', fieldId: 'label', value: 'Postal Address'});
+        } else {
+            record.setCurrentSublistValue({sublistId: 'addressbook', fieldId: 'label', value: 'Other Address'});
+        }
+    }
     if (addressSublistForm.defaultshipping && context.state.shippingAddressAdded !== addressSublistForm.internalid && context.state.shippingAddressAdded !== null) {
-        // strip defaultshipping from old address
         let customerRecord = NS_MODULES.record.load({
             type: NS_MODULES.record.Type.CUSTOMER,
             id: customerId,
@@ -402,6 +420,9 @@ function _updateDefaultShippingAndBillingAddress(NS_MODULES, context, customerId
         let line = customerRecord.findSublistLineWithValue({sublistId: 'addressbook', fieldId: 'internalid', value: context.state.shippingAddressAdded});
         customerRecord.selectLine({sublistId: 'addressbook', line});
         customerRecord.setCurrentSublistValue({sublistId: 'addressbook', fieldId: 'defaultshipping', value: false});
+
+        updateAddressLabel(customerRecord);
+
         customerRecord.commitLine({sublistId: 'addressbook'});
         customerRecord.save({ignoreMandatoryFields: true});
     }
@@ -414,6 +435,9 @@ function _updateDefaultShippingAndBillingAddress(NS_MODULES, context, customerId
         let line = customerRecord.findSublistLineWithValue({sublistId: 'addressbook', fieldId: 'internalid', value: context.state.billingAddressAdded});
         customerRecord.selectLine({sublistId: 'addressbook', line});
         customerRecord.setCurrentSublistValue({sublistId: 'addressbook', fieldId: 'defaultbilling', value: false});
+
+        updateAddressLabel(customerRecord);
+
         customerRecord.commitLine({sublistId: 'addressbook'});
         customerRecord.save({ignoreMandatoryFields: true});
     }
@@ -425,6 +449,18 @@ function _checkBillingAndShippingAddress(context) {
 
     let billingAddresses = context.state.addresses.filter(item => item.defaultbilling === true);
     context.state.billingAddressAdded = billingAddresses.length ? billingAddresses[0].internalid : null;
+}
+
+function _setAddressLabel(addressObject) {
+    if (addressObject.defaultshipping) {
+        addressObject.label = 'Site Address';
+    } else if (addressObject.defaultbilling) {
+        addressObject.label = 'Billing Address';
+    } else if (addressObject.isresidential) {
+        addressObject.label = 'Postal Address';
+    } else {
+        addressObject.label = 'Other Address';
+    }
 }
 
 

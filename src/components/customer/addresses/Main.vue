@@ -1,5 +1,5 @@
 <template>
-    <div class="col-12">
+    <div class="col-lg-6 col-12">
 
         <h1 class="text-center">Addresses</h1>
         <h3 class="text-center" v-if="loading">Loading addresses...</h3>
@@ -110,16 +110,22 @@
                         <b-form-invalid-feedback :state="!errors.has('longitude')">{{ errors.first('longitude') }}</b-form-invalid-feedback>
                     </b-input-group>
                 </div>
-                <div class="col-6">
+                <div class="col-4">
                     <b-form-checkbox id="checkbox-1" v-model="addressSublistForm.defaultshipping" name="checkbox-1"
                         :value="true" :unchecked-value="false" :disabled="addressFormBusy">
                         Default Shipping
                     </b-form-checkbox>
                 </div>
-                <div class="col-6">
+                <div class="col-4">
                     <b-form-checkbox id="checkbox-2" v-model="addressSublistForm.defaultbilling" name="checkbox-2"
                         :value="true" :unchecked-value="false" :disabled="addressFormBusy">
                         Default Billing
+                    </b-form-checkbox>
+                </div>
+                <div class="col-4">
+                    <b-form-checkbox id="checkbox-3" v-model="addressSublistForm.isresidential" name="checkbox-3"
+                                     :value="true" :unchecked-value="false" :disabled="addressFormBusy">
+                        Is Postal Address
                     </b-form-checkbox>
                 </div>
             </div>
