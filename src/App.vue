@@ -17,7 +17,7 @@
 <script>
 import CustomerDetails from "./components/CustomerDetails";
 import CustomerAddresses from "./components/customer/addresses/Main";
-import CustomerContacts from "./components/CustomerContacts";
+import CustomerContacts from "./components/customer/contacts/Main";
 
 export default {
     name: 'App',

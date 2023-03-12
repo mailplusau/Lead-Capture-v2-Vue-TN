@@ -1,25 +1,9 @@
 <template>
-    <div class="col-6">
+    <div class="col-lg-6 col-12">
         <h1 class="text-center">Contacts</h1>
         <h3 class="text-center" v-if="loading">Loading contacts...</h3>
 
-        <div class="row justify-content-between align-items-center mb-2" v-for="(item, index) in contacts" :key="'entry' + index">
-            <div class="col-auto">
-                <span>{{item.salutation}} {{item.firstname}} {{item.lastname}}</span><br>
-                <span>{{item.title}}</span><br>
-                <span>{{item.phone}}</span><br>
-                <span>{{item.email}}</span>
-            </div>
-            <div class="col-auto">
-                <b-button size="sm" variant="link">
-                    <b-icon icon="pencil" @click="openContactModal(item.internalid)"></b-icon>
-                </b-button>
-
-                <b-button size="sm" variant="link">
-                    <b-icon icon="trash" variant="danger"></b-icon>
-                </b-button>
-            </div>
-        </div>
+        <ContactTable />
 
         <div class="row mb-2">
             <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')" :disabled="contactFormBusy || loading">Add A New Contact</b-button>
@@ -120,8 +104,10 @@
 </template>
 
 <script>
+import ContactTable from "./ContactTable";
 export default {
     name: "CustomerContacts",
+    components: {ContactTable},
     data: () => ({
         yesNoUnsure: [
             {value: 2, text: 'No'},
@@ -133,9 +119,6 @@ export default {
     methods: {
         handleContactModalHide(event) {
             if(this.contactFormBusy) event.preventDefault();
-        },
-        openContactModal(internalId) {
-            this.$store.dispatch('contacts/openContactModal', internalId);
         },
         saveContactForm() {
             this.$validator.validateAll().then((result) => {
@@ -151,9 +134,6 @@ export default {
         }
     },
     computed: {
-        contacts() {
-            return this.$store.getters['contacts/all'];
-        },
         contactForm() {
             return this.$store.getters['contacts/form'];
         },
