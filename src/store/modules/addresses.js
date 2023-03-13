@@ -207,14 +207,14 @@ const actions = {
                     let index = context.state.addresses.findIndex(item => item.internalid === context.state.shippingAddressAdded);
                     if (index >= 0) {
                         context.state.addresses[index].defaultshipping = false;
-                        _setAddressLabel(context.state.addresses[index]); // Update label because default shipping address is changed
+                        _setAddressLabel(context.state.addresses[index]); // Update label because default shipping address has changed
                     }
                 }
                 if (context.state.addressSublistForm.defaultbilling && context.state.billingAddressAdded !== context.state.addressSublistForm.internalid) {
                     let index = context.state.addresses.findIndex(item => item.internalid === context.state.billingAddressAdded);
                     if (index >= 0) {
                         context.state.addresses[index].defaultbilling = false;
-                        _setAddressLabel(context.state.addresses[index]); // Update label because default billing address is changed
+                        _setAddressLabel(context.state.addresses[index]); // Update label because default billing address has changed
                     }
                 }
 
@@ -241,6 +241,33 @@ const actions = {
 
             context.state.addressModal = false;
         }, 200)
+    },
+    removeAddress : (context, addressInternalId) => {
+
+        context.state.addressFormBusy = true;
+
+        return new Promise(resolve => {
+            setTimeout(async () => {
+                if (context.rootGetters['customer/internalId']) {
+                    let NS_MODULES = await getNSModules();
+
+                    _removeAddressFromNetSuite(NS_MODULES, context.rootGetters['customer/internalId'], addressInternalId);
+
+                    _loadAddresses(context, NS_MODULES);
+                } else {
+                    // delete from local memory
+                    let index = context.state.addresses.findIndex(item => item.internalid === addressInternalId);
+
+                    if (index >= 0) context.state.addresses.splice(index, 1);
+                }
+
+                _checkBillingAndShippingAddress(context);
+
+                context.state.addressFormBusy = false;
+
+                resolve();
+            }, 250);
+        })
     },
     handlePostalStateChanged : (context, stateIndex) => {
         context.state.addressFormBusy = true;
@@ -397,6 +424,18 @@ function _saveAddressToNetSuite(NS_MODULES, context, customerId, addressData) {
     // Save customer record
     customerRecord.save({ignoreMandatoryFields: true});
 
+}
+
+function _removeAddressFromNetSuite(NS_MODULES, customerId, addressInternalId) {
+    let customerRecord = NS_MODULES.record.load({
+        type: NS_MODULES.record.Type.CUSTOMER,
+        id: customerId,
+    });
+    let line = customerRecord.findSublistLineWithValue({sublistId: 'addressbook', fieldId: 'internalid', value: addressInternalId});
+
+    customerRecord.removeLine({sublistId: 'addressbook', line});
+
+    customerRecord.save({ignoreMandatoryFields: true});
 }
 
 function _updateDefaultShippingAndBillingAddress(NS_MODULES, context, customerId, addressSublistForm) {

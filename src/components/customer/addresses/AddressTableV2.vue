@@ -27,7 +27,7 @@
                             <b-icon icon="pencil"></b-icon>
                         </b-button>
 
-                        <b-button size="sm" variant="link">
+                        <b-button size="sm" variant="link" @click="internalIdToDelete = item.internalid">
                             <b-icon icon="trash" variant="danger"></b-icon>
                         </b-button>
 
@@ -71,18 +71,24 @@
             </b-table>
 
         </div>
+
+        <AddressDeletionModal v-model="internalIdToDelete" />
     </div>
 </template>
 
 <script>
+import AddressDeletionModal from "./AddressDeletionModal";
+
 export default {
     name: "AddressTable",
+    components: {AddressDeletionModal},
     data: () => ({
         fields: [
             {key: 'address', label: 'Address'},
             {key: 'geocoded', label: 'Geocoded'},
             {key: 'actions', label: ''},
         ],
+        internalIdToDelete: null,
     }),
     computed: {
         addresses() {
