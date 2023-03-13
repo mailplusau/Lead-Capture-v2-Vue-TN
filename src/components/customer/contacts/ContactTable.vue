@@ -35,7 +35,7 @@
                             <b-icon icon="pencil"></b-icon>
                         </b-button>
 
-                        <b-button size="sm" variant="link">
+                        <b-button size="sm" variant="link" @click="internalIdToDelete = item.internalid">
                             <b-icon icon="trash" variant="danger"></b-icon>
                         </b-button>
 
@@ -76,18 +76,23 @@
             </b-table>
 
         </div>
+
+        <ContactDeletionModal v-model="internalIdToDelete" />
     </div>
 </template>
 
 <script>
+import ContactDeletionModal from "./ContactDeletionModal";
 export default {
     name: "ContactTable",
+    components: {ContactDeletionModal},
     data: () => ({
         fields: [
             {key: 'contact', label: 'Contact'},
             {key: 'role', label: 'Role'},
             {key: 'actions', label: ''},
         ],
+        internalIdToDelete: null,
     }),
     methods: {
         getRoleText(roleId) {

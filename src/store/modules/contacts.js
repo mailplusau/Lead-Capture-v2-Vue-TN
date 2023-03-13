@@ -111,6 +111,31 @@ const actions = {
 
             context.state.contactModal = false;
         }, 250);
+    },
+    deleteContact : (context, internalId) => {
+        context.state.contactFormBusy = true;
+
+        return new Promise(resolve => {
+            setTimeout(async () => {
+                if (context.rootGetters['customer/internalId']) {
+                    let NS_MODULES = await getNSModules();
+
+                    _setContactAsInactive(NS_MODULES, internalId);
+
+                    _loadContacts(context, NS_MODULES);
+                } else {
+                    let index = context.state.contacts.findIndex(item => item.internalid === internalId);
+
+                    if (index >= 0) context.state.contacts.splice(index, 1);
+                }
+
+                _checkForAdminPortalRoles(context);
+
+                context.state.contactFormBusy = false;
+
+                resolve();
+            }, 200)
+        })
     }
     
 }
@@ -190,6 +215,17 @@ function _saveContactToNetSuite(NS_MODULES, customerId, contactData) {
 
         contactRecord.setValue({fieldId, value: contactData[fieldId]});
     }
+
+    contactRecord.save({ignoreMandatoryFields: true});
+}
+
+function _setContactAsInactive(NS_MODULES, contactInternalId) {
+    let contactRecord = NS_MODULES.record.load({
+        type: NS_MODULES.record.Type.CONTACT,
+        id: contactInternalId,
+    });
+
+    contactRecord.setValue({fieldId: 'isinactive', value: true});
 
     contactRecord.save({ignoreMandatoryFields: true});
 }
