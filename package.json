@@ -34,6 +34,8 @@
     "html-webpack-inline-source-plugin": "1.0.0-beta.2",
     "html-webpack-plugin": "4.0.0-beta.4",
     "oauth-1.0a": "^2.2.6",
+    "sass": "^1.59.2",
+    "sass-loader": "^10.4.1",
     "superagent": "^5.1.0",
     "vue-template-compiler": "^2.6.11"
   }

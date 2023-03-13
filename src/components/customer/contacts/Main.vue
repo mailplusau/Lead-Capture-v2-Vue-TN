@@ -1,6 +1,6 @@
 <template>
     <div class="col-lg-6 col-12">
-        <h1 class="text-center">Contacts</h1>
+        <h1 class="text-center mp-header">Contacts</h1>
         <h3 class="text-center" v-if="loading">Loading contacts...</h3>
 
         <ContactTable />
@@ -17,14 +17,6 @@
             <div class="row">
                 <div class="col-12 mb-3 text-start" v-show="!!msg">
                     <p v-html="msg" class="text-success"></p>
-                </div>
-                <div class="col-12 mb-3">
-                    <b-input-group prepend="Salutation">
-                        <b-form-select v-model="contactForm.salutation" v-validate="'required'" data-vv-name="salutation" :options="['Mr.', 'Mrs']"
-                                       :class="errors.has('salutation') ? 'is-invalid' : ''" :disabled="contactFormBusy"></b-form-select>
-
-                        <b-form-invalid-feedback :state="!errors.has('salutation')">{{ errors.first('salutation') }}</b-form-invalid-feedback>
-                    </b-input-group>
                 </div>
                 <div class="col-6 mb-3">
                     <b-input-group prepend="First name">
@@ -60,7 +52,7 @@
                 </div>
                 <div class="col-6 mb-3">
                     <b-input-group prepend="Title/Position">
-                        <b-form-input v-model="contactForm.title" v-validate="'required'" data-vv-name="title"
+                        <b-form-input v-model="contactForm.title" v-validate="''" data-vv-name="title" placeholder="(optional)"
                                       :class="errors.has('title') ? 'is-invalid' : ''" :disabled="contactFormBusy"></b-form-input>
 
                         <b-form-invalid-feedback :state="!errors.has('title')">{{ errors.first('title') }}</b-form-invalid-feedback>
@@ -76,7 +68,7 @@
                 </div>
                 <div class="col-6 mb-3">
                     <b-input-group prepend="Portal Admin">
-                        <b-form-select v-model="contactForm.custentity_connect_admin" v-validate="'required'" data-vv-name="connect_admin"
+                        <b-form-select v-model="contactForm.custentity_connect_admin" v-validate="''" data-vv-name="connect_admin"
                                        :class="errors.has('connect_admin') ? 'is-invalid' : ''" :options="yesNoUnsure" :disabled="contactFormBusy"></b-form-select>
 
                         <b-form-invalid-feedback :state="!errors.has('connect_admin')">{{ errors.first('connect_admin') }}</b-form-invalid-feedback>
@@ -84,7 +76,7 @@
                 </div>
                 <div class="col-6 mb-3">
                     <b-input-group prepend="Portal User">
-                        <b-form-select v-model="contactForm.custentity_connect_user" v-validate="'required'" data-vv-name="connect_user"
+                        <b-form-select v-model="contactForm.custentity_connect_user" v-validate="''" data-vv-name="connect_user"
                                        :class="errors.has('connect_user') ? 'is-invalid' : ''" :options="yesNoUnsure" :disabled="contactFormBusy"></b-form-select>
 
                         <b-form-invalid-feedback :state="!errors.has('connect_user')">{{ errors.first('connect_user') }}</b-form-invalid-feedback>
@@ -111,7 +103,6 @@ export default {
     data: () => ({
         yesNoUnsure: [
             {value: 2, text: 'No'},
-            {value: 3, text: 'Unsure'},
             {value: 1, text: 'Yes'}
         ],
         msg: '',

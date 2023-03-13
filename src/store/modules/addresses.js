@@ -498,7 +498,7 @@ function _setAddressLabel(addressObject) {
     } else if (addressObject.isresidential) {
         addressObject.label = 'Postal Address';
     } else {
-        addressObject.label = 'Other Address';
+        addressObject.label = 'Alternative Sender';
     }
 }
 

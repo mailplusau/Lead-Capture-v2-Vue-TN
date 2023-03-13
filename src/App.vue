@@ -70,4 +70,11 @@ body.modal-open {
     overflow: hidden !important;
 }
 
+.mp-header {
+    color: #387080;
+}
+.mp-text {
+    color: #103d39
+}
+
 </style>

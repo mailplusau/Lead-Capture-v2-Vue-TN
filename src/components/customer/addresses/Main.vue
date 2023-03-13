@@ -1,7 +1,7 @@
 <template>
     <div class="col-lg-6 col-12">
 
-        <h1 class="text-center">Addresses</h1>
+        <h1 class="text-center mp-header">Addresses</h1>
         <h3 class="text-center" v-if="loading">Loading addresses...</h3>
         <p class="text-danger" v-show="!!addressMissingWarningText" v-html="addressMissingWarningText"></p>
         <AddressTable />

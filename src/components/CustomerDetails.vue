@@ -2,7 +2,7 @@
 
     <div class="row justify-content-center" >
         <div class="col-12">
-            <h1 class="text-center">Lead's Details</h1>
+            <h1 class="text-center mp-header">Lead's Details</h1>
         </div>
         <div class="col-8 mb-4">
             <b-input-group prepend="Company Name">
