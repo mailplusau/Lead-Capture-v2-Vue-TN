@@ -2,12 +2,14 @@
     <div class="col-lg-6 col-12">
 
         <h1 class="text-center mp-header">Addresses</h1>
-        <h3 class="text-center" v-if="loading">Loading addresses...</h3>
-        <p class="text-danger" v-show="!!addressMissingWarningText" v-html="addressMissingWarningText"></p>
+        <p class="text-danger" v-show="!!addressMissingWarningText && !addressFormBusy" v-html="addressMissingWarningText"></p>
+
         <AddressTable />
 
         <div class="row mb-2">
-            <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('addresses/openAddressModal')" :disabled="addressFormBusy || loading">Add A New Address</b-button>
+            <div class="col-12">
+                <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('addresses/openAddressModal')" :disabled="addressFormBusy || loading">Add A New Address</b-button>
+            </div>
         </div>
 
         <b-modal id="modal-address" centered v-model="addressModal" size="lg" static @hide="handleAddressModalHide">
@@ -110,23 +112,25 @@
                         <b-form-invalid-feedback :state="!errors.has('longitude')">{{ errors.first('longitude') }}</b-form-invalid-feedback>
                     </b-input-group>
                 </div>
-                <div class="col-4">
-                    <b-form-checkbox id="checkbox-1" v-model="addressSublistForm.defaultshipping" name="checkbox-1"
-                        :value="true" :unchecked-value="false" :disabled="addressFormBusy">
-                        Default Shipping
-                    </b-form-checkbox>
-                </div>
-                <div class="col-4">
-                    <b-form-checkbox id="checkbox-2" v-model="addressSublistForm.defaultbilling" name="checkbox-2"
-                        :value="true" :unchecked-value="false" :disabled="addressFormBusy">
-                        Default Billing
-                    </b-form-checkbox>
-                </div>
-                <div class="col-4">
-                    <b-form-checkbox id="checkbox-3" v-model="addressSublistForm.isresidential" name="checkbox-3"
-                                     :value="true" :unchecked-value="false" :disabled="addressFormBusy">
-                        Is Postal Address
-                    </b-form-checkbox>
+                <div class="col-12">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" value="" id="checkbox-1" v-model="addressSublistForm.defaultshipping" name="checkbox-1">
+                        <label class="form-check-label" for="checkbox-1">
+                            Default Shipping ({{addressSublistForm.defaultshipping}})
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" value="" id="checkbox-2" v-model="addressSublistForm.defaultbilling" name="checkbox-2">
+                        <label class="form-check-label" for="checkbox-2">
+                            Default Billing ({{addressSublistForm.defaultbilling}})
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" value="" id="checkbox-3" v-model="addressSublistForm.isresidential" name="checkbox-3">
+                        <label class="form-check-label" for="checkbox-3">
+                            Is Residential Address ({{addressSublistForm.isresidential}})
+                        </label>
+                    </div>
                 </div>
             </div>
 

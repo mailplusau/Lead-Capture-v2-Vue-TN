@@ -1,12 +1,13 @@
 <template>
     <div class="col-lg-6 col-12">
         <h1 class="text-center mp-header">Contacts</h1>
-        <h3 class="text-center" v-if="loading">Loading contacts...</h3>
 
         <ContactTable />
 
         <div class="row mb-2">
-            <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')" :disabled="contactFormBusy || loading">Add A New Contact</b-button>
+            <div class="col-12">
+                <b-button variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')" :disabled="contactFormBusy || loading">Add A New Contact</b-button>
+            </div>
         </div>
 
         <b-modal id="modal-contact" centered v-model="contactModal" size="lg" static @hide="handleContactModalHide">

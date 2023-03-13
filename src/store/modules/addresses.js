@@ -6,7 +6,7 @@ let _loadPostalLocationsRunning = false;
 const state = {
     addresses: [],
     addressSelectedId: null,
-    addressModal: false,
+    addressModal: true,
     addressModalTitle: '',
     addressFormBusy: false,
     addressLoading: true,
@@ -294,6 +294,18 @@ const actions = {
         context.state.addressForm.custrecord_address_lat = postalLocation.custrecord_ap_lodgement_lat;
         context.state.addressForm.custrecord_address_lon = postalLocation.custrecord_ap_lodgement_long;
         context.state.addressForm.custrecord_address_ncl = postalLocation.internalid;
+    },
+
+    saveAddressesToNewCustomer : async (context, newCustomerId) => {
+        console.log('saving addresses for ', newCustomerId);
+        console.log(context.state.addresses);
+
+        let NS_MODULES = await getNSModules();
+
+        for (let address of context.state.addresses) {
+            _saveAddressToNetSuite(NS_MODULES, context, newCustomerId, {...address, internalid: null})
+        }
+        console.log('saving addresses done');
     }
 }
 
@@ -303,9 +315,7 @@ function _resetAddressForm(context) {
         context.state.addressForm[fieldId] = '';
     }
 
-    if (context.rootGetters['customer/internalId'])
-        context.state.addressForm.addressee = context.rootGetters['customer/details'].companyname || '';
-    
+    context.state.addressForm.addressee = context.rootGetters['customer/detailForm'].companyname || '';
     context.state.addressForm.country = 'AU';
 
     context.state.addressSublistForm.label = '';

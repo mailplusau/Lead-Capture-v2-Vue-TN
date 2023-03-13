@@ -7,6 +7,12 @@ Vue.use(Vuex)
 
 const state = {
     errorNoNSModules: true,
+    globalModal: {
+        open: false,
+        title: '',
+        body: '',
+        busy: false,
+    },
     industries: [],
     leadSources: [],
     franchisees: [],
@@ -36,10 +42,11 @@ const getters = {
     roles : state => state.roles,
     statuses : state => state.statuses,
     states : state => state.states,
+    globalModal : state => state.globalModal
 };
 
 const mutations = {
-
+    setGlobalModal :  (state, open = true) => { state.globalModal.open = open; },
 };
 
 const actions = {
@@ -93,7 +100,33 @@ const actions = {
 
         await _fetchDataForHtmlSelect(context.state.roles,
             'customsearch_salesp_contact_roles', 'contactrole', 'internalId', 'name');
+    },
+
+    saveNewCustomer : async context => {
+        context.state.globalModal.title = 'New Customer';
+        context.state.globalModal.body = 'Creating New Customer. Please Wait...';
+        context.state.globalModal.busy = true;
+        context.state.globalModal.open = true;
+
+        let customerId = await context.dispatch('customer/saveNewCustomer');
+        console.log('New customer id is ', customerId);
+
+        await Promise.allSettled([
+            context.dispatch('addresses/saveAddressesToNewCustomer', customerId),
+            context.dispatch('contacts/saveContactsToNewCustomer', customerId)
+        ]);
+
+        // context.state.globalModal.busy = false;
+        let count = 0;
+        let tmp = setInterval(() => {
+            context.state.globalModal.body = 'New Customer Created! Redirecting in ' + (5-count) + '...';
+            if (count >= 5) {
+                clearInterval(tmp);
+                window.location.href = 'https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=1706&deploy=1&custid=' + customerId;
+            } else count++;
+        }, 1000)
     }
+
 };
 
 async function _fetchDataForHtmlSelect(stateObject, id, type, valueColumnName, textColumnName) {

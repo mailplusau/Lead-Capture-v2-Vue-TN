@@ -71,6 +71,7 @@ let actions = {
         for (let fieldId in context.state.details) {
             context.state.details[fieldId] = customerRecord.getValue({ fieldId });
         }
+        console.log(context.state.details);
 
         context.commit('resetDetailForm');
         context.commit('disableDetailForm');
@@ -98,6 +99,28 @@ let actions = {
 
             context.commit('setBusy', false);
         }, 250);
+    },
+
+    saveNewCustomer : (context) => {
+        console.log('saving new customer...')
+        console.log(context.state.detailForm);
+        return new Promise(resolve => {
+            setTimeout(async () => {
+                let NS_MODULES = await getNSModules();
+                context.state.details = {...context.state.detailForm};
+                let customerRecord = NS_MODULES.record.create({
+                    type: NS_MODULES.record.Type.LEAD,
+                });
+
+                for (let fieldId in context.state.details) {
+                    customerRecord.setValue({fieldId, value: context.state.details[fieldId]});
+                }
+
+                let customerId = customerRecord.save({ignoreMandatoryFields: true});
+                console.log('saving new customer done')
+                resolve(customerId);
+            }, 200);
+        });
     }
 };
 

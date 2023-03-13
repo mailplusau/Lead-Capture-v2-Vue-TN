@@ -11,6 +11,8 @@
         <div class="row mt-4" v-if="!$store.getters['customer/internalId'] && !$store.getters['customer/busy']">
             <b-button block @click="saveNewCustomer" variant="success">Save</b-button>
         </div>
+
+        <GlobalNoticeModal />
     </div>
 </template>
 
@@ -18,10 +20,11 @@
 import CustomerDetails from "./components/CustomerDetails";
 import CustomerAddresses from "./components/customer/addresses/Main";
 import CustomerContacts from "./components/customer/contacts/Main";
+import GlobalNoticeModal from "./components/GlobalNoticeModal";
 
 export default {
     name: 'App',
-    components: {CustomerContacts, CustomerAddresses, CustomerDetails},
+    components: {GlobalNoticeModal, CustomerContacts, CustomerAddresses, CustomerDetails},
     async beforeCreate() {
         await this.$store.dispatch('init');
     },
@@ -40,8 +43,10 @@ export default {
                 }
             });
         },
-        saveNewCustomer() {
-            this.$refs.customerDetails.commitDetails();
+        async saveNewCustomer() {
+            if (await this.$refs.customerDetails.checkForm()) {
+                this.$store.dispatch('saveNewCustomer').then();
+            }
         }
     }
 }

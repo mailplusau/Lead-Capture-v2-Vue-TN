@@ -83,7 +83,7 @@ const actions = {
             if (context.rootGetters['customer/internalId']) {
                 context.state.contactForm.company = context.rootGetters['customer/internalId'];
 
-                _saveContactToNetSuite(NS_MODULES, context.rootGetters['customer/internalId'], context.state.contactForm);
+                _saveContactToNetSuite(NS_MODULES, context.state.contactForm);
             } else {
 
                 if (context.state.contactForm.internalid) { // we still have local id for these cibtacts to make it easy to edit them
@@ -136,8 +136,19 @@ const actions = {
                 resolve();
             }, 200)
         })
+    },
+
+    saveContactsToNewCustomer : async (context, newCustomerId) => {
+        console.log('saving contracts for ', newCustomerId);
+        console.log(context.state.contacts);
+
+        let NS_MODULES = await getNSModules();
+
+        for (let contact of context.state.contacts) {
+            _saveContactToNetSuite(NS_MODULES, {...contact, internalid: null, company: newCustomerId});
+        }
+        console.log('saving contracts done');
     }
-    
 }
 
 /** -- Fields in customsearch_salesp_contacts saved search --
@@ -158,6 +169,8 @@ Portal User custentity_connect_user
 MPEX Contact custentity_mpex_contact
  **/
 function _loadContacts(context, NS_MODULES) {
+    if (!context.rootGetters['customer/internalId']) return;
+
     let contactSearch = NS_MODULES.search.load({
         id: 'customsearch_salesp_contacts',
         type: 'contact'
@@ -193,7 +206,9 @@ function _loadContacts(context, NS_MODULES) {
     })
 }
 
-function _saveContactToNetSuite(NS_MODULES, customerId, contactData) {
+function _saveContactToNetSuite(NS_MODULES, contactData) {
+    if (!contactData.company) return; // company is the current customer's internal id
+
     let contactRecord;
 
     if (contactData.internalid) {
@@ -209,10 +224,6 @@ function _saveContactToNetSuite(NS_MODULES, customerId, contactData) {
     }
 
     for (let fieldId in contactData) {
-        if (fieldId === 'custentity_connect_admin' || fieldId === 'custentity_connect_user' || fieldId === 'internalid') {
-            if (!contactData[fieldId] || parseInt(contactData[fieldId]) === 3) continue;
-        }
-
         contactRecord.setValue({fieldId, value: contactData[fieldId]});
     }
 

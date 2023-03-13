@@ -12,11 +12,11 @@ export default function () {
                     NS_MODULES = window._getClientModules();
                     clearInterval(appTimer);
                     resolve(NS_MODULES);
-                } else if (retryCount >= 5) {
+                } else if (retryCount >= 10) {
                     clearInterval(appTimer);
                     reject('Could not load NS Modules');
                 }
-            }, 1000);
+            }, 500);
         }
     });
 }

@@ -105,8 +105,8 @@ export default {
 
     },
     methods: {
-        commitDetails() {
-            console.log('inside');
+        async checkForm() {
+            return await this.$validator.validateAll();
         },
         editForm() {
             this.$store.commit('customer/disableDetailForm', false);
