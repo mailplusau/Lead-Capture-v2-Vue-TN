@@ -2,13 +2,14 @@
     <div class="col-lg-6 col-12">
 
         <h1 class="text-center mp-header">Addresses</h1>
-        <p class="text-danger" v-show="!!addressMissingWarningText && !addressFormBusy" v-html="addressMissingWarningText"></p>
 
         <AddressTable />
 
+        <p class="text-danger" v-show="!!addressMissingWarningText && !addressFormBusy" v-html="addressMissingWarningText"></p>
+
         <div class="row mb-2">
             <div class="col-12">
-                <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('addresses/openAddressModal')" :disabled="addressFormBusy || loading">Add A New Address</b-button>
+                <b-button block variant="outline-primary" size="sm" @click="$store.dispatch('addresses/openAddressModal')" :disabled="addressFormBusy || loading">Add Address</b-button>
             </div>
         </div>
 
@@ -18,10 +19,10 @@
             </template>
             <div class="row">
                 <div class="col-12 mb-3 text-start">
-                    <span v-show="(!$store.getters['addresses/billingAddressAdded'] || $store.getters['addresses/billingAddressAdded'] === addressSublistForm.internalid) && !addressSublistForm.defaultbilling" class="text-warning">
+                    <span v-show="(!$store.getters['addresses/billingAddressAdded'] || $store.getters['addresses/billingAddressAdded'] === addressSublistForm.internalid) && !addressSublistForm.defaultbilling" class="address-warning">
                         At least 1 Billing Address required. Either make this a Billing Address or add one before submitting.<br>
                     </span>
-                    <span v-show="(!$store.getters['addresses/shippingAddressAdded'] || $store.getters['addresses/shippingAddressAdded'] === addressSublistForm.internalid) && !addressSublistForm.defaultshipping" class="text-warning">
+                    <span v-show="(!$store.getters['addresses/shippingAddressAdded'] || $store.getters['addresses/shippingAddressAdded'] === addressSublistForm.internalid) && !addressSublistForm.defaultshipping" class="address-warning">
                         At least 1 Shipping Address required. Either make this a Shipping Address or add one before submitting.<br>
                     </span>
                     <span v-show="$store.getters['addresses/billingAddressAdded'] && $store.getters['addresses/billingAddressAdded'] !== addressSublistForm.internalid && addressSublistForm.defaultbilling" class="text-danger">
@@ -55,10 +56,11 @@
                 </div>
                 <div class="col-12 mb-3" v-if="addressType === 'street'">
                     <b-input-group prepend="Street No. & Name">
-                        <GoogleAutocomplete v-model="addressForm.addr2" :disabled="addressFormBusy" id="address2" @placeChanged="handlePlaceChanged"/>
+                        <GoogleAutocomplete v-validate="'required|min:3'" data-vv-name="address2" :class="errors.has('address2') || !isAddressValid ? 'is-invalid' : ''"
+                                            v-model="addressForm.addr2" :disabled="addressFormBusy" id="address2" @placeChanged="handlePlaceChanged"/>
 
-                        <b-form-invalid-feedback :state="isAddressValid">
-                            Please fill in address and use autocomplete.
+                        <b-form-invalid-feedback :state="!errors.has('address2') || isAddressValid">
+                            {{ !isAddressValid ? 'Please fill in address using autocomplete' : errors.first('address2') }}
                         </b-form-invalid-feedback>
                     </b-input-group>
                 </div>
@@ -75,7 +77,7 @@
                 <div class="col-4 mb-3">
                     <b-input-group prepend="City">
                         <b-form-input v-validate="'required'" data-vv-name="suburb" :class="errors.has('suburb') ? 'is-invalid' : ''"
-                                      v-model="addressForm.city" placeholder="to be autofilled" readonly></b-form-input>
+                                      v-model="addressForm.city" placeholder="to be autofilled" disabled></b-form-input>
 
                         <b-form-invalid-feedback :state="!errors.has('suburb')">{{ errors.first('suburb') }}</b-form-invalid-feedback>
                     </b-input-group>
@@ -83,7 +85,7 @@
                 <div class="col-4 mb-3" v-if="addressType === 'street'">
                     <b-input-group prepend="State">
                         <b-form-input v-validate="'required'" data-vv-name="state" :class="errors.has('state') ? 'is-invalid' : ''"
-                                      v-model="addressForm.state" placeholder="to be autofilled" readonly></b-form-input>
+                                      v-model="addressForm.state" placeholder="to be autofilled" disabled></b-form-input>
 
                         <b-form-invalid-feedback :state="!errors.has('state')">{{ errors.first('state') }}</b-form-invalid-feedback>
                     </b-input-group>
@@ -91,7 +93,7 @@
                 <div :class="(addressType === 'street' ? 'col-4' : 'col-8') + ' mb-3'">
                     <b-input-group :prepend="'Postcode' + (addressType === 'postal' ? '/Mailing code' : '')">
                         <b-form-input v-validate="'required'" data-vv-name="post_code" :class="errors.has('post_code') ? 'is-invalid' : ''"
-                                      v-model="addressForm.zip" :placeholder="addressType === 'street' ? 'to be autofilled' : ''" :readonly="addressType === 'street'"></b-form-input>
+                                      v-model="addressForm.zip" :placeholder="addressType === 'street' ? 'to be autofilled' : ''" :disabled="addressType === 'street'"></b-form-input>
 
                         <b-form-invalid-feedback :state="!errors.has('post_code')">{{ errors.first('post_code') }}</b-form-invalid-feedback>
                     </b-input-group>
@@ -99,7 +101,7 @@
                 <div class="col-6 mb-3">
                     <b-input-group prepend="Lat">
                         <b-form-input v-validate="'required'" data-vv-name="latitude" :class="errors.has('latitude') ? 'is-invalid' : ''"
-                                      v-model="addressForm.custrecord_address_lat" placeholder="to be autofilled" readonly></b-form-input>
+                                      v-model="addressForm.custrecord_address_lat" placeholder="to be autofilled" disabled></b-form-input>
 
                         <b-form-invalid-feedback :state="!errors.has('latitude')">{{ errors.first('latitude') }}</b-form-invalid-feedback>
                     </b-input-group>
@@ -107,7 +109,7 @@
                 <div class="col-6 mb-3">
                     <b-input-group prepend="Lng">
                         <b-form-input v-validate="'required'" data-vv-name="longitude" :class="errors.has('longitude') ? 'is-invalid' : ''"
-                                      v-model="addressForm.custrecord_address_lon" placeholder="to be autofilled" readonly></b-form-input>
+                                      v-model="addressForm.custrecord_address_lon" placeholder="to be autofilled" disabled></b-form-input>
 
                         <b-form-invalid-feedback :state="!errors.has('longitude')">{{ errors.first('longitude') }}</b-form-invalid-feedback>
                     </b-input-group>
@@ -116,19 +118,19 @@
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" value="" id="checkbox-1" v-model="addressSublistForm.defaultshipping" name="checkbox-1">
                         <label class="form-check-label" for="checkbox-1">
-                            Default Shipping ({{addressSublistForm.defaultshipping}})
+                            Default Shipping
                         </label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" value="" id="checkbox-2" v-model="addressSublistForm.defaultbilling" name="checkbox-2">
                         <label class="form-check-label" for="checkbox-2">
-                            Default Billing ({{addressSublistForm.defaultbilling}})
+                            Default Billing
                         </label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" value="" id="checkbox-3" v-model="addressSublistForm.isresidential" name="checkbox-3">
                         <label class="form-check-label" for="checkbox-3">
-                            Is Residential Address ({{addressSublistForm.isresidential}})
+                            Is Residential Address
                         </label>
                     </div>
                 </div>
@@ -156,7 +158,6 @@ export default {
     name: "Main",
     components: {AddressTable, GoogleAutocomplete},
     data: () => ({
-        isAddressValid: true,
     }),
     methods: {
         // TODO: Add validation
@@ -181,6 +182,9 @@ export default {
         },
     },
     computed: {
+        isAddressValid() {
+            return this.addressForm.city && this.addressForm.state && this.addressForm.zip;
+        },
         addressForm() {
             return this.$store.getters['addresses/form'];
         },
@@ -248,5 +252,8 @@ export default {
 </script>
 
 <style scoped>
-
+    .address-warning {
+        color: #103d39;
+        font-weight: bold;
+    }
 </style>

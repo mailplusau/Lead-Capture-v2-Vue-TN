@@ -42,6 +42,30 @@ export default {
                     return australiaPhoneFormat.test(value);
                 }
             });
+            this.$validator.extend('aus_abn', {
+                getMessage(field) {
+                    return `the ${field} field must be a valid Australian ABN number.`;
+                },
+                validate(value) {
+
+                    if (!value || value.length !== 11) {
+                        return false;
+                    }
+                    let weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19],
+                        checksum = value.split('').map(Number).reduce(
+                            function(total, digit, index) {
+                                if (!index) {
+                                    digit--;
+                                }
+                                return total + (digit * weights[index]);
+                            },
+                            0
+                        );
+
+                    return !(!checksum || checksum % 89 !== 0);
+
+                }
+            });
         },
         async saveNewCustomer() {
             if (await this.$refs.customerDetails.checkForm()) {
@@ -82,4 +106,11 @@ body.modal-open {
     color: #103d39
 }
 
+/* Styles to give NetSuite the MailPlus color */
+div#body {
+    background-color: #cfe0ce !important;
+}
+ul#NS_MENU_ID0, ul#NS_MENU_ID0 > .ns-menuitem > a {
+    background-color: #cfe0ce !important;
+}
 </style>

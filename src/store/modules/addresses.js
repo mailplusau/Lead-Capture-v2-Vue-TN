@@ -6,7 +6,7 @@ let _loadPostalLocationsRunning = false;
 const state = {
     addresses: [],
     addressSelectedId: null,
-    addressModal: true,
+    addressModal: false,
     addressModalTitle: '',
     addressFormBusy: false,
     addressLoading: true,

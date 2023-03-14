@@ -6,7 +6,7 @@
 
         <div class="row mb-2">
             <div class="col-12">
-                <b-button variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')" :disabled="contactFormBusy || loading">Add A New Contact</b-button>
+                <b-button variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')" :disabled="contactFormBusy || loading">Add Contact</b-button>
             </div>
         </div>
 
