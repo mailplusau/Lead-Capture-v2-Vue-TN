@@ -214,14 +214,20 @@ function hasNetSuiteError(customMsg, err, response) {
     return false;
 }
 
-let filePath = path.resolve(__dirname, 'dist/' + packageJson.netsuite.htmlFile);
+(() => {
+    let filePath;
+    if (!process.argv[2]) filePath = path.resolve(__dirname, 'dist/' + packageJson.netsuite.htmlFile);
+    else filePath = path.resolve(__dirname, process.argv[2]);
 
-let fileContent = fs.readFileSync(filePath, 'utf8');
+    if (fs.existsSync(filePath)) {
+        let fileContent = fs.readFileSync(filePath, 'utf8');
 
-postFile(filePath, fileContent, function (err, res) {
-    console.log('Uploading file ' + filePath + ' to NetSuite cabinet...');
-    if (hasNetSuiteError('ERROR uploading file.', err, res)) return;
+        postFile(filePath, fileContent, function (err, res) {
+            console.log('Uploading file ' + filePath + ' to NetSuite cabinet...');
+            if (hasNetSuiteError('ERROR uploading file.', err, res)) return;
 
-    let relativeFileName = getRelativePath(filePath);
-    console.info('SUCCESS! File "' + relativeFileName + '" uploaded.');
-});
+            // let relativeFileName = getRelativePath(filePath);
+            console.info('Upload successful!');
+        });
+    } else console.log('File does not exist', filePath);
+})();
