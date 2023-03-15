@@ -18,10 +18,5 @@ Note: Output file name is under `netsuite.htmlFile` key in `package.json`
 npm run build
 ```
 
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### Suitelet and Client script setup
+This project includes a Suitelet script and a Client script in `SuiteScripts` directory.
