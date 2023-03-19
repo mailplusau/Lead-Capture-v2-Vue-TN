@@ -130,7 +130,7 @@
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" value="" id="checkbox-3" v-model="addressSublistForm.isresidential" name="checkbox-3">
                         <label class="form-check-label" for="checkbox-3">
-                            Is Residential Address
+                            Postal Address
                         </label>
                     </div>
                 </div>

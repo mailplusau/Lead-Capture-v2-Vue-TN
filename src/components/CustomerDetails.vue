@@ -53,11 +53,11 @@
             </b-input-group>
         </div>
         <div class="col-6 mb-4">
-            <b-input-group prepend="Industry">
-                <b-form-select v-model="detailForm.custentity_industry_category" v-validate="'required'" data-vv-name="industry"
-                               :options="$store.getters['industries']" :disabled="formDisabled"></b-form-select>
+            <b-input-group prepend="Franchisee">
+                <b-form-select v-model="detailForm.partner" v-validate="'required'" data-vv-name="franchisee"
+                               :options="$store.getters['franchisees']" :disabled="formDisabled"></b-form-select>
 
-                <b-form-invalid-feedback :state="!errors.has('industry')">{{ errors.first('industry') }}</b-form-invalid-feedback>
+                <b-form-invalid-feedback :state="!errors.has('franchisee')">{{ errors.first('franchisee') }}</b-form-invalid-feedback>
             </b-input-group>
         </div>
         <div class="col-6 mb-4">
@@ -68,12 +68,37 @@
                 <b-form-invalid-feedback :state="!errors.has('lead_source')">{{ errors.first('lead_source') }}</b-form-invalid-feedback>
             </b-input-group>
         </div>
-        <div class="col-6 mb-4">
-            <b-input-group prepend="Franchisee">
-                <b-form-select v-model="detailForm.partner" v-validate="'required'" data-vv-name="franchisee"
-                               :options="$store.getters['franchisees']" :disabled="formDisabled"></b-form-select>
 
-                <b-form-invalid-feedback :state="!errors.has('franchisee')">{{ errors.first('franchisee') }}</b-form-invalid-feedback>
+        <template v-if="showOldCustomerFields">
+            <div class="col-6 mb-4">
+                <b-input-group prepend="Old Franchisee">
+                    <b-form-select v-model="detailForm.custentity_old_zee"
+                                   :options="$store.getters['franchisees']" disabled></b-form-select>
+
+                    <b-form-invalid-feedback :state="!oldCustomerIdInvalid">
+                        Please input the valid and correct ID for Old Customer ID field.
+                    </b-form-invalid-feedback>
+                </b-input-group>
+            </div>
+            <div class="col-6 mb-4">
+                <b-input-group prepend="Old Customer ID">
+                    <b-form-input v-model="detailForm.custentity_old_customer" v-validate="'required|numeric'" data-vv-name="old_customer_id"
+                                  :class="errors.has('old_customer_id') ? 'is-invalid' : ''" :disabled="formDisabled || oldCustomerIdFieldDisabled"></b-form-input>
+
+                    <b-form-invalid-feedback :state="!errors.has('old_customer_id') || !oldCustomerIdInvalid">
+                        {{ errors.first('old_customer_id') }}
+                        {{oldCustomerIdInvalid ? 'Old Customer ID is invalid.' : ''}}
+                    </b-form-invalid-feedback>
+                </b-input-group>
+            </div>
+        </template>
+
+        <div class="col-6 mb-4">
+            <b-input-group prepend="Industry">
+                <b-form-select v-model="detailForm.custentity_industry_category" v-validate="'required'" data-vv-name="industry"
+                               :options="$store.getters['industries']" :disabled="formDisabled"></b-form-select>
+
+                <b-form-invalid-feedback :state="!errors.has('industry')">{{ errors.first('industry') }}</b-form-invalid-feedback>
             </b-input-group>
         </div>
         <div class="col-6 mb-4">
@@ -96,17 +121,29 @@
 </template>
 
 <script>
+import {debounce} from "../utils/utils";
+
 export default {
     name: "CustomerDetails",
     data: () => ({
-
+        oldCustomerIdFieldDisabled: false,
+        showOldCustomerFields: false,
+        oldCustomerIdInvalid: false,
     }),
-    mounted() {
+    created() {
+        this.debouncedHandleOldCustomerIdChanged = debounce(async (newValue, oldValue) => {
+            console.log("value changed: ", newValue, oldValue);
+            if (!await this.$validator.validateAll(['old_customer_id'])) return;
 
+            this.oldCustomerIdFieldDisabled = true;
+            await this.$store.dispatch('customer/handleOldCustomerIdChanged');
+            if (!this.detailForm.custentity_old_zee) this.oldCustomerIdInvalid = true;
+            this.oldCustomerIdFieldDisabled = false;
+        }, 2000);
     },
     methods: {
         async checkForm() {
-            return await this.$validator.validateAll();
+            return await this.$validator.validateAll() && !this.oldCustomerIdInvalid;
         },
         editForm() {
             this.$store.commit('customer/disableDetailForm', false);
@@ -120,14 +157,10 @@ export default {
         },
         saveForm() {
             this.$validator.validateAll().then((result) => {
-                if (result) {
-                    // eslint-disable-next-line
+                if (result && !this.oldCustomerIdInvalid) {
                     console.log('Form Submitted!');
                     this.$store.dispatch('customer/saveCustomer');
-                    return;
-                }
-
-                console.log('Correct them errors!');
+                } else console.log('Correct them errors!');
             });
         }
     },
@@ -143,7 +176,23 @@ export default {
         },
         busy() {
             return this.$store.getters['customer/busy'];
-        }
+        },
+    },
+    watch: {
+        'detailForm.custentity_old_customer': function (...args) {
+            this.oldCustomerIdInvalid = false;
+            this.debouncedHandleOldCustomerIdChanged(...args);
+        },
+        'detailForm.leadsource': function (newValue) {
+            // show these fields when lead source is Change of Entity or Relocation
+            if (parseInt(newValue) === 202599 || parseInt(newValue) === 217602)
+                this.showOldCustomerFields = true;
+            else { // otherwise hide the fields and reset them
+                this.showOldCustomerFields = false;
+                this.detailForm.custentity_old_customer = '';
+                this.detailForm.custentity_old_zee = '';
+            }
+        },
     }
 }
 </script>

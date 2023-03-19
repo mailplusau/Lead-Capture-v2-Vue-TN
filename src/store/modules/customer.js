@@ -14,6 +14,10 @@ const state = {
         leadsource: '',
         partner: '',
         entitystatus: '',
+        custentity_old_zee: '',
+        custentity_old_customer: '',
+        custentity_new_zee: '',
+        custentity_new_customer: '',
     },
     detailForm: {},
     detailFormValid: false,
@@ -76,6 +80,17 @@ let actions = {
         context.commit('resetDetailForm');
         context.commit('disableDetailForm');
     },
+    handleOldCustomerIdChanged : async (context) => {
+        let NS_MODULES = await getNSModules();
+
+        let result = NS_MODULES.search.lookupFields({
+            type: NS_MODULES.search.Type.CUSTOMER,
+            id: context.state.detailForm.custentity_old_customer,
+            columns: ['partner']
+        });
+
+        context.state.detailForm.custentity_old_zee = result.partner ? result.partner[0].value : '';
+    },
     saveCustomer : context => {
         context.commit('setBusy');
         context.commit('disableDetailForm');
@@ -94,6 +109,8 @@ let actions = {
             }
 
             customerRecord.save({ignoreMandatoryFields: true});
+
+            _updateOldCustomer(NS_MODULES, context, context.state.internalId);
 
             await context.dispatch('getDetails', NS_MODULES);
 
@@ -118,11 +135,29 @@ let actions = {
 
                 let customerId = customerRecord.save({ignoreMandatoryFields: true});
                 console.log('saving new customer done')
+
+                _updateOldCustomer(NS_MODULES, context, customerId);
+
                 resolve(customerId);
             }, 200);
         });
     }
 };
+
+function _updateOldCustomer(NS_MODULES, context, newCustomerId) {
+    if (!context.state.details.custentity_new_zee || !context.state.details.custentity_new_customer) return;
+
+    let oldCustomerRecord = NS_MODULES.record.load({
+        type: NS_MODULES.record.Type.CUSTOMER,
+        id: context.state.details.custentity_old_customer,
+        isDynamic: true
+    });
+
+    oldCustomerRecord.setValue({fieldId: 'custentity_new_customer', value: newCustomerId});
+    oldCustomerRecord.setValue({fieldId: 'custentity_new_zee', value: context.state.details.partner});
+
+    oldCustomerRecord.save({ignoreMandatoryFields: true});
+}
 
 
 export default {
