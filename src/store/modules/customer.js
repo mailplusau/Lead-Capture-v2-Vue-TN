@@ -145,7 +145,7 @@ let actions = {
 };
 
 function _updateOldCustomer(NS_MODULES, context, newCustomerId) {
-    if (!context.state.details.custentity_new_zee || !context.state.details.custentity_new_customer) return;
+    if (!context.state.details.custentity_old_customer) return;
 
     let oldCustomerRecord = NS_MODULES.record.load({
         type: NS_MODULES.record.Type.CUSTOMER,

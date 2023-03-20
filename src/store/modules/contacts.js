@@ -90,7 +90,7 @@ const actions = {
                     let index = context.state.contacts.findIndex(item => item.internalid === context.state.contactForm.internalid);
                     context.state.contacts.splice(index, 1, {
                         ...context.state.contactForm,
-                        internalid: context.state.addressSublistForm.internalid
+                        internalid: context.state.contactForm.internalid
                     })
                 } else {
                     context.state.contacts.push({
