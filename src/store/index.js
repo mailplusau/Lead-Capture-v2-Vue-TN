@@ -119,10 +119,11 @@ const actions = {
         // context.state.globalModal.busy = false;
         let count = 0;
         let tmp = setInterval(() => {
-            context.state.globalModal.body = 'New Customer Created! Redirecting in ' + (5-count) + '...';
-            if (count >= 5) {
+            context.state.globalModal.body = 'New Customer Created! Redirecting in ' + (3-count) + '...';
+            if (count >= 3) {
                 clearInterval(tmp);
-                window.location.href = 'https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=1706&deploy=1&custid=' + customerId;
+                // window.location.href = 'https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=1706&deploy=1&custid=' + customerId;
+                window.location.href = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + customerId;
             } else count++;
         }, 1000)
     }

@@ -18,6 +18,9 @@ const state = {
         custentity_old_customer: '',
         custentity_new_zee: '',
         custentity_new_customer: '',
+
+        custentity_service_fuel_surcharge: 1, // 1: yes, 2: no, 3: not included
+        custentity_service_fuel_surcharge_percen: 9.5 // 9.5% is default
     },
     detailForm: {},
     detailFormValid: false,
@@ -63,24 +66,25 @@ let actions = {
     getDetails : (context, NS_MODULES) => {
         if (!context.state.internalId) {
             context.commit('disableDetailForm', false);
-            return;
-        }
+        } else {
+            let customerRecord = NS_MODULES.record.load({
+                type: NS_MODULES.record.Type.CUSTOMER,
+                id: context.state.internalId,
+                isDynamic: true
+            });
 
-        let customerRecord = NS_MODULES.record.load({
-            type: NS_MODULES.record.Type.CUSTOMER,
-            id: context.state.internalId,
-            isDynamic: true
-        });
+            for (let fieldId in context.state.details) {
+                context.state.details[fieldId] = customerRecord.getValue({ fieldId });
+            }
 
-        for (let fieldId in context.state.details) {
-            context.state.details[fieldId] = customerRecord.getValue({ fieldId });
+            context.commit('disableDetailForm');
         }
-        console.log(context.state.details);
 
         context.commit('resetDetailForm');
-        context.commit('disableDetailForm');
     },
     handleOldCustomerIdChanged : async (context) => {
+        if (!context.state.detailForm.custentity_old_customer) return;
+
         let NS_MODULES = await getNSModules();
 
         let result = NS_MODULES.search.lookupFields({
@@ -94,7 +98,7 @@ let actions = {
     saveCustomer : context => {
         context.commit('setBusy');
         context.commit('disableDetailForm');
-        // TODO: save this to NetSuite
+
         setTimeout(async () => {
             context.state.details = {...context.state.detailForm};
             let NS_MODULES = await getNSModules();
