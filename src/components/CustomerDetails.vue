@@ -143,7 +143,7 @@ export default {
     },
     methods: {
         async checkForm() {
-            return await this.$validator.validateAll() && !this.oldCustomerIdInvalid;
+            return await this.$validator.validateAll() && (this.showOldCustomerFields ? !this.oldCustomerIdInvalid : true);
         },
         editForm() {
             this.$store.commit('customer/disableDetailForm', false);
@@ -157,7 +157,7 @@ export default {
         },
         saveForm() {
             this.$validator.validateAll().then((result) => {
-                if (result && !this.oldCustomerIdInvalid) {
+                if (result && (this.showOldCustomerFields ? !this.oldCustomerIdInvalid : true)) {
                     console.log('Form Submitted!');
                     this.$store.dispatch('customer/saveCustomer');
                 } else console.log('Correct them errors!');
