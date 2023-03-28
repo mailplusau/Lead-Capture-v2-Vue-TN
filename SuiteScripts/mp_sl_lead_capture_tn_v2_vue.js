@@ -42,7 +42,7 @@ define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file'], (serverWidget, r
 // Render the page within a form element of NetSuite. This can cause conflict with NetSuite's stylesheets.
 function _getInlineForm(response) {
     // Create a NetSuite form
-    let form = nServerWidget.createForm({ title: "Lead Capture v2" });
+    let form = nServerWidget.createForm({ title: "Prospect Capture Form" });
 
     // Then create form field in which we will render our html template
     let htmlField = form.addField({
