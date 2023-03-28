@@ -22,9 +22,9 @@ define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file'], (serverWidget, r
     const onRequest = ({request, response}) => {
         if (request.method === "GET") {
 
+            // if testMode param is present, we load the alternative html template. for testing and dev work only.
             if (parseInt(request.parameters.testMode) === 1)
                 htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue_test.html'
-
 
             // Render the page using either inline form or standalone page
             // _getStandalonePage(response)

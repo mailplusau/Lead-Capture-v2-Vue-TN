@@ -1,8 +1,10 @@
 <template>
     <div class="row">
         <div class="col-12">
-
-            <b-table :items="addresses" :fields="fields" striped responsive="sm" head-row-variant="light" hover :busy="$store.getters['addresses/loading']">
+            <b-table :items="addresses" :fields="fields" striped responsive="sm" head-row-variant="light" hover :busy="$store.getters['addresses/loading']" show-empty>
+                <template v-slot:empty>
+                    No Address To Show
+                </template>
                 <template v-slot:table-busy>
                     <div class="text-center text-danger my-2">
                         <b-spinner class="align-middle mx-2"></b-spinner>
