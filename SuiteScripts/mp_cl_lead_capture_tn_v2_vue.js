@@ -8,10 +8,12 @@
 
 let modules = {};
 
+const moduleNames = ['error', 'runtime', 'search', 'record', 'url', 'format', 'email', 'currentRecord'];
+
 // eslint-disable-next-line no-undef
-define(['N/error', 'N/runtime', 'N/search', 'N/url', 'N/record', 'N/format','N/email', 'N/currentRecord'],
-    (error, runtime, search, url, record, format, email, currentRecord) => {
-        modules = {error, runtime, search, url, record, format, email, currentRecord};
+define(moduleNames.map(item => 'N/' + item), (...args) => {
+        for (let [index, moduleName] of moduleNames.entries())
+            modules[moduleName] = args[index];
 
         function pageInit() {
             console.log('Client script init.');

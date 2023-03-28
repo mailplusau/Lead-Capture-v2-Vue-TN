@@ -7,7 +7,7 @@
  */
 
 // This should be the same file as the one built by webpack. Make sure this matches the filename in package.json
-const htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue.html';
+let htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue.html';
 
 let nServerWidget, nSearch, nRender, nFile;
 
@@ -21,6 +21,10 @@ define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file'], (serverWidget, r
     
     const onRequest = ({request, response}) => {
         if (request.method === "GET") {
+
+            if (parseInt(request.parameters.testMode) === 1)
+                htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue_test.html'
+
 
             // Render the page using either inline form or standalone page
             // _getStandalonePage(response)
