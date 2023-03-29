@@ -100,25 +100,14 @@
                     <b-form-invalid-feedback :state="!errors.has('longitude')">{{ errors.first('longitude') }}</b-form-invalid-feedback>
                 </b-input-group>
             </div>
-            <div class="col-12">
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="" id="checkbox-1" v-model="addressSublistForm.defaultshipping" name="checkbox-1">
-                    <label class="form-check-label" for="checkbox-1">
-                        Default Shipping
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="" id="checkbox-2" v-model="addressSublistForm.defaultbilling" name="checkbox-2">
-                    <label class="form-check-label" for="checkbox-2">
-                        Default Billing
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="" id="checkbox-3" v-model="addressSublistForm.isresidential" name="checkbox-3">
-                    <label class="form-check-label" for="checkbox-3">
-                        Postal Address
-                    </label>
-                </div>
+            <div class="col-4">
+                <CheckboxInputGroup label="Default Shipping" v-model="addressSublistForm.defaultshipping" />
+            </div>
+            <div class="col-4">
+                <CheckboxInputGroup label="Default Billing" v-model="addressSublistForm.defaultbilling" />
+            </div>
+            <div class="col-4">
+                <CheckboxInputGroup label="Postal Address" v-model="addressSublistForm.isresidential" />
             </div>
         </div>
 
@@ -135,10 +124,11 @@
 
 <script>
 import GoogleAutocomplete from "../../GoogleAutocomplete";
+import CheckboxInputGroup from "../../misc/CheckboxInputGroup";
 
 export default {
     name: "AddressFormModal",
-    components: {GoogleAutocomplete},
+    components: {CheckboxInputGroup, GoogleAutocomplete},
     methods: {
         saveAddressForm() {
             this.$validator.validateAll().then((result) => {
