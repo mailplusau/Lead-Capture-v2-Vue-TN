@@ -29,6 +29,16 @@
                     {{ getRoleText(item.contactrole) }}
                 </template>
 
+                <template v-slot:cell(admin)="{item}">
+                    <b-icon :icon="item.custentity_connect_admin === 1 ? 'check-lg' : 'x-lg'"
+                            :variant="item.custentity_connect_admin === 1 ? 'success' : 'danger'"></b-icon>
+                </template>
+
+                <template v-slot:cell(user)="{item}">
+                    <b-icon :icon="item.custentity_connect_user === 1 ? 'check-lg' : 'x-lg'"
+                            :variant="item.custentity_connect_user === 1 ? 'success' : 'danger'"></b-icon>
+                </template>
+
                 <template v-slot:cell(actions)="{item, detailsShowing, toggleDetails}">
                     <div class="text-end">
 
@@ -74,6 +84,15 @@
 
                     </b-card>
                 </template>
+
+                <template v-slot:custom-foot>
+                    <b-tr style="background-color: #9ed79b">
+                        <b-td :colspan="fields.length">
+                            <b-button variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')"
+                                      :disabled="$store.getters['contacts/formBusy'] || loading">Add Contact</b-button>
+                        </b-td>
+                    </b-tr>
+                </template>
             </b-table>
 
         </div>
@@ -91,6 +110,8 @@ export default {
         fields: [
             {key: 'contact', label: 'Contact'},
             {key: 'role', label: 'Role'},
+            {key: 'admin', label: 'Portal Admin'},
+            {key: 'user', label: 'Portal User'},
             {key: 'actions', label: ''},
         ],
         internalIdToDelete: null,

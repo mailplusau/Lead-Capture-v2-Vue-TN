@@ -5,18 +5,6 @@
 
         <AddressTable />
 
-        <p class="text-danger" v-show="!!addressMissingWarningText && !addressFormBusy" v-html="addressMissingWarningText"></p>
-
-        <div class="row mb-2">
-            <div class="col-12">
-                <b-button block variant="outline-primary" size="sm"
-                          @click="$store.dispatch('addresses/openAddressModal')"
-                          :disabled="addressFormBusy || loading">
-                    Add Address
-                </b-button>
-            </div>
-        </div>
-
         <AddressFormModal />
 
     </div>
@@ -35,24 +23,6 @@ export default {
         },
         addressFormBusy() {
             return this.$store.getters['addresses/formBusy'];
-        },
-        addressMissingWarningText() {
-            let str = '';
-            let control = 0;
-
-            if (!this.$store.getters['addresses/shippingAddressAdded']) {
-                str += '<b>1 default shipping</b>';
-                control++;
-            }
-
-            if (!this.$store.getters['addresses/billingAddressAdded']) {
-                str += (control ? ' and ' : '') + '<b>1 default billing</b>';
-                control++;
-            }
-
-            if (control) str += ' address required!';
-
-            return str;
         },
     },
 }

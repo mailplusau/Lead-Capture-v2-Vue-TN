@@ -14,8 +14,17 @@
                 <template v-slot:head(address)="{label}">
                     <div class="text-start">{{label}}</div>
                 </template>
+
                 <template v-slot:cell(address)="{item}">
                     <p class="text-start">{{item.addr1 + ' ' + item.addr2 + ', ' + item.city + ' ' + item.state + ' ' + item.zip}}</p>
+                </template>
+
+                <template v-slot:cell(shipping)="{item}">
+                    <b-icon :icon="item.defaultshipping ? 'check-lg' : 'x-lg'" :variant="item.defaultshipping ? 'success' : 'danger'"></b-icon>
+                </template>
+
+                <template v-slot:cell(billing)="{item}">
+                    <b-icon :icon="item.defaultbilling ? 'check-lg' : 'x-lg'" :variant="item.defaultbilling ? 'success' : 'danger'"></b-icon>
                 </template>
 
                 <template v-slot:cell(geocoded)="{item}">
@@ -70,6 +79,21 @@
 
                     </b-card>
                 </template>
+
+                <template v-slot:custom-foot>
+                    <b-tr style="background-color: #9ed79b">
+                        <b-td :colspan="fields.length">
+                            <p class="text-danger" v-show="!!addressMissingWarningText && !$store.getters['addresses/formBusy']"
+                               v-html="addressMissingWarningText"></p>
+
+                            <b-button variant="outline-primary" size="sm"
+                                      @click="$store.dispatch('addresses/openAddressModal')"
+                                      :disabled="$store.getters['addresses/formBusy'] || $store.getters['addresses/loading']">
+                                Add Address
+                            </b-button>
+                        </b-td>
+                    </b-tr>
+                </template>
             </b-table>
 
         </div>
@@ -87,6 +111,8 @@ export default {
     data: () => ({
         fields: [
             {key: 'address', label: 'Address'},
+            {key: 'shipping', label: 'Default Shipping'},
+            {key: 'billing', label: 'Default Billing'},
             {key: 'geocoded', label: 'Geocoded'},
             {key: 'actions', label: ''},
         ],
@@ -95,6 +121,24 @@ export default {
     computed: {
         addresses() {
             return this.$store.getters['addresses/all'];
+        },
+        addressMissingWarningText() {
+            let str = '';
+            let control = 0;
+
+            if (!this.$store.getters['addresses/shippingAddressAdded']) {
+                str += '<b>1 default shipping</b>';
+                control++;
+            }
+
+            if (!this.$store.getters['addresses/billingAddressAdded']) {
+                str += (control ? ' and ' : '') + '<b>1 default billing</b>';
+                control++;
+            }
+
+            if (control) str += ' address required!';
+
+            return str;
         },
     }
 }

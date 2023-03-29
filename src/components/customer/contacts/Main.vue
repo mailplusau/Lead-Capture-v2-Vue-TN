@@ -4,14 +4,8 @@
 
         <ContactTable />
 
-        <div class="row mb-2">
-            <div class="col-12">
-                <b-button variant="outline-primary" size="sm" @click="$store.dispatch('contacts/openContactModal')" :disabled="contactFormBusy || loading">Add Contact</b-button>
-            </div>
-        </div>
-
         <b-modal id="modal-contact" centered v-model="contactModal" size="lg" static @hide="handleContactModalHide">
-            <template slot="modal-header">
+            <template v-slot:modal-header>
                 <h1 class="text-center">{{$store.getters['contacts/modalTitle']}}</h1>
             </template>
 
@@ -85,7 +79,7 @@
                 </div>
             </div>
 
-            <template slot="modal-footer">
+            <template v-slot:modal-footer>
                 <b-button size="sm" :disabled="contactFormBusy" @click="contactModal = false">Cancel</b-button>
                 <b-button size="sm" variant="success" :disabled="contactFormBusy" @click="saveContactForm">
                     {{contactFormBusy ? 'Saving' : 'Save'}}
