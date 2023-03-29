@@ -2,6 +2,8 @@
     <div id="app" class="container">
         <CustomerDetails ref="customerDetails"/>
 
+        <AdditionalInformation />
+
         <div class="row justify-content-center align-items-stretch mt-3">
             <CustomerAddresses />
 
@@ -21,10 +23,11 @@ import CustomerDetails from "./components/CustomerDetails";
 import CustomerAddresses from "./components/customer/addresses/Main";
 import CustomerContacts from "./components/customer/contacts/Main";
 import GlobalNoticeModal from "./components/GlobalNoticeModal";
+import AdditionalInformation from "./components/customer/AdditionalInformation";
 
 export default {
     name: 'App',
-    components: {GlobalNoticeModal, CustomerContacts, CustomerAddresses, CustomerDetails},
+    components: {AdditionalInformation, GlobalNoticeModal, CustomerContacts, CustomerAddresses, CustomerDetails},
     async beforeCreate() {
         await this.$store.dispatch('init');
     },
