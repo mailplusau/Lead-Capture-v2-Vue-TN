@@ -1,4 +1,6 @@
 import getNSModules from '../../utils/ns-modules';
+import moment from 'moment-timezone';
+import 'moment/locale/en-au';
 
 // 1001, 1031 and 1023 are finance roles
 // 1032 is the Data Systems Co-ordinator role
@@ -62,6 +64,41 @@ const state = {
         formDisabled: true,
     },
 
+    invoices: {
+        data: [
+            // { "id": 4196554,"status_text": "Paid In Full", "invoice_type": "", "invoice_link": "#", "statusref": "paidInFull", "trandate": "31/12/2022", "invoicenum": "Invoice #INV1050668", "amountremaining": ".00", "total": "448.68", "duedate": "15/03/2023" },
+            // { "id":4220468,"status_text": "Paid In Full", "invoice_type": "", "invoice_link": "#", "statusref": "paidInFull", "trandate": "31/01/2023", "invoicenum": "Invoice #INV1055261", "amountremaining": ".00", "total": "433.62", "duedate": "15/02/2023" },
+            // { "id":4254837,"status_text": "Paid In Full", "invoice_type": "", "invoice_link": "#", "statusref": "paidInFull", "trandate": "28/02/2023", "invoicenum": "Invoice #INV1063976", "amountremaining": ".00", "total": "403.51", "duedate": "21/01/2024" }
+        ],
+        loading: false,
+        status: null,
+        statuses: [
+            {value: null, text: '-- None --'},
+            {value: 'CustInvc:A', text: 'Open Invoices'},
+            {value: 'CustInvc:B', text: 'Paid In Full'}
+        ],
+        period: null,
+        periods: [
+            {value: null, text: '-- None --'},
+            {
+                value: moment().tz('Australia/Sydney').subtract(7, 'days').format('DD/MM/YYYY').toString(),
+                text: 'Last 7 Days'
+            },
+            {
+                value: moment().tz('Australia/Sydney').subtract(1, 'months').format('DD/MM/YYYY').toString(),
+                text: 'Last Month'
+            },
+            {
+                value: moment().tz('Australia/Sydney').subtract(3, 'months').format('DD/MM/YYYY').toString(),
+                text: 'Last 3 Months'
+            },
+            {
+                value: moment().tz('Australia/Sydney').subtract(6, 'months').format('DD/MM/YYYY').toString(),
+                text: 'Last 6 Months'
+            },
+        ]
+    },
+
     accountManagers: [
         {value: 668711, text: 'Lee Russell'},
         {value: 696160, text: 'Kerina Helliwell'},
@@ -84,6 +121,13 @@ let getters = {
     additionalInfoFormValid : state => state.additionalInfo.formValid,
     additionalInfoFormDisabled : state => state.additionalInfo.formDisabled,
 
+    invoices : state => state.invoices.data,
+    invoicesLoading : state => state.invoices.loading,
+    invoiceStatus : state => state.invoices.status,
+    invoicesStatuses : state => state.invoices.statuses,
+    invoicePeriod : state => state.invoices.period,
+    invoicesPeriods : state => state.invoices.periods,
+
     showAdditionalInfoSection : (state, getters, rootState) => {
         let roles = [...financeRole, ...dataSysCoordinatorRole, ...mpAdminRole, ...adminRole];
         return rootState.userRole &&
@@ -100,6 +144,9 @@ const mutations = {
 
     resetAdditionalInfoForm : state => { state.additionalInfo.form = {...state.additionalInfo.data}; },
     disableAdditionalInfoForm : (state, disabled = true) => { state.additionalInfo.formDisabled = disabled; },
+
+    setInvoicesStatus : (state, status) => { state.invoices.status = status; },
+    setInvoicesPeriod : (state, period) => { state.invoices.period = period; },
 }
 
 let actions = {
@@ -149,6 +196,62 @@ let actions = {
 
         context.commit('resetDetailForm');
         context.commit('resetAdditionalInfoForm');
+    },
+    getInvoices : async context => {
+        if (!context.state.internalId || !context.state.invoices.status || !context.state.invoices.period || context.rootState.errorNoNSModules)
+            return;
+
+        console.log('getting invoices...');
+        context.state.invoices.loading = true;
+
+        setTimeout(async () => {
+            let { search, format } = await getNSModules();
+            let invoicesSearch = search.load({
+                id: 'customsearch_mp_ticket_invoices_datatabl',
+                type: search.Type.INVOICE
+            });
+            let invoicesFilterExpression = invoicesSearch.filterExpression;
+            invoicesFilterExpression.push('AND', ['entity', search.Operator.IS,
+                context.state.internalId
+            ]);
+
+            invoicesFilterExpression.push('AND', ["status", search.Operator.ANYOF,
+                context.state.invoices.status
+            ]);
+
+            invoicesFilterExpression.push('AND', ["trandate", search.Operator.AFTER,
+                format.format({
+                    value: context.state.invoices.period,
+                    type: format.Type.DATE
+                })
+            ]);
+
+            invoicesSearch.filterExpression = invoicesFilterExpression;
+            let invoicesSearchResults = invoicesSearch.run();
+
+            context.state.invoices.data.splice(0);
+            let fieldIds = ['statusref', 'trandate', 'invoicenum', 'amountremaining', 'total', 'duedate'];
+            invoicesSearchResults.each(function (invoiceResult) {
+                let tmp = {};
+
+                for (let fieldId of fieldIds)
+                    tmp[fieldId] = invoiceResult.getValue(fieldId);
+
+                tmp['status_text'] = invoiceResult.getText('statusref');
+                tmp['invoice_type'] = invoiceResult.getText('custbody_inv_type');
+                tmp['invoice_link'] = _getInvoiceURL(invoiceResult.id);
+                tmp['id'] = invoiceResult.id;
+
+                tmp['trandate'] = moment(tmp['trandate'], 'D/M/YYYY').format('DD/MM/YYYY').toString();
+                tmp['duedate'] = moment(tmp['duedate'], 'D/M/YYYY').format('DD/MM/YYYY').toString();
+
+                context.state.invoices.data.push(tmp);
+
+                return true;
+            });
+
+            context.state.invoices.loading = false;
+        }, 150);
     },
     handleOldCustomerIdChanged : async (context) => {
         if (!context.state.detailForm.custentity_old_customer) return;
@@ -270,6 +373,13 @@ function _displayBusyGlobalModal(context, open = true) {
     context.rootState.globalModal.body = 'Saving Customer\'s Details. Please Wait...';
     context.rootState.globalModal.busy = open;
     context.rootState.globalModal.open = open;
+}
+
+function _getInvoiceURL(invoice_id) {
+    let baseURL = 'https://1048144.app.netsuite.com';
+    let compid = '1048144';
+    return baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id +
+    '&compid=' + compid + '&cf=116&whence=';
 }
 
 export default {
