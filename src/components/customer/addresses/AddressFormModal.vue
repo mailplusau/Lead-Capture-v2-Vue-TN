@@ -20,7 +20,7 @@
             </div>
             <div class="col-12 mb-3">
                 <b-input-group prepend="Addressee (Company Name)">
-                    <b-form-input v-model="addressForm.addressee" v-validate="'required|min:5'" data-vv-name="company_name"
+                    <b-form-input v-model="addressForm.addressee" v-validate="'required|min:5|max:83'" data-vv-name="company_name"
                                   :class="errors.has('company_name') ? 'is-invalid' : ''" :disabled="addressFormBusy"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('company_name')">{{ errors.first('company_name') }}</b-form-invalid-feedback>
