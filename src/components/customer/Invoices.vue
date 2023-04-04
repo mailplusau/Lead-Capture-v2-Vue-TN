@@ -1,5 +1,5 @@
 <template>
-    <b-card border-variant="primary" bg-variant="transparent" class="my-3">
+    <b-card v-if="$store.getters['customer/showInvoicesSection']" border-variant="primary" bg-variant="transparent" class="my-3">
         <div class="row justify-content-between align-items-stretch">
             <div class="col-12">
                 <h1 class="text-center mp-header">{{ sectionTitle }}</h1>

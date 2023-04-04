@@ -12,6 +12,8 @@
 
         <CustomerInvoices />
 
+        <ExtraFeatures />
+
         <div class="row mt-4" v-if="!$store.getters['customer/internalId'] && !$store.getters['customer/busy']">
             <b-button block @click="saveNewCustomer" variant="success">Save</b-button>
         </div>
@@ -27,12 +29,13 @@ import CustomerContacts from "./components/customer/contacts/Main";
 import GlobalNoticeModal from "./components/GlobalNoticeModal";
 import AdditionalInformation from "./components/customer/AdditionalInformation";
 import CustomerInvoices from "./components/customer/Invoices";
+import ExtraFeatures from "./components/customer/extras/Main";
 
 export default {
     name: 'App',
     components: {
         CustomerInvoices,
-        AdditionalInformation, GlobalNoticeModal, CustomerContacts, CustomerAddresses, CustomerDetails},
+        AdditionalInformation, GlobalNoticeModal, CustomerContacts, CustomerAddresses, CustomerDetails, ExtraFeatures},
     async beforeCreate() {
         await this.$store.dispatch('init');
     },
@@ -122,7 +125,7 @@ ul#NS_MENU_ID0, ul#NS_MENU_ID0 > .ns-menuitem > a {
     background-color: #cfe0ce !important;
 }
 
-ul.pagination.b-pagination {
+ul.pagination.b-pagination, ul.nav.nav-tabs {
     display: flex !important;
     padding-left: 0 !important;
     list-style: none !important;

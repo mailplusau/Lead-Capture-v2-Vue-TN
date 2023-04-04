@@ -13,7 +13,7 @@ const adminRole = [3];
 
 const state = {
     internalId: null, // this is the customer ID
-    busy: true,
+    busy: false,
     details: {
         companyname: '',
         vatregnumber: '',
@@ -52,6 +52,8 @@ const state = {
             custentity_mpex_invoicing_cycle: null, // Invoice cycle ID
             terms: null, // Term(?)
             custentity_finance_terms: null, // Customer's Term
+
+            custentity_customer_pricing_notes: '', // Pricing Notes
         },
         franchisee: {
             companyname: null, // Franchisee name
@@ -132,8 +134,11 @@ let getters = {
         let roles = [...financeRole, ...dataSysCoordinatorRole, ...mpAdminRole, ...adminRole];
         return rootState.userRole &&
             roles.includes(parseInt(rootState.userRole)) &&
-            parseInt(state.details.entitystatus) === 13;
+            parseInt(state.details.entitystatus) === 13 && state.internalId;
     },
+    showInvoicesSection : (state) => {
+        return !!state.internalId;
+    }
 };
 
 const mutations = {
@@ -169,6 +174,8 @@ let actions = {
             context.dispatch('getDetails', NS_MODULES),
             context.dispatch('addresses/init', NS_MODULES, {root: true}),
             context.dispatch('contacts/init', NS_MODULES, {root: true}),
+            context.dispatch('services/init', NS_MODULES, {root: true}),
+            context.dispatch('item-pricing/init', NS_MODULES, {root: true}),
         ])
 
         context.commit('setBusy', false);
