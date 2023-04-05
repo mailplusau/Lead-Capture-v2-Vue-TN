@@ -62,8 +62,19 @@ const state = {
             custentity2: null, // Main contact phone
             custentity_abn_franchiserecord: null, // Franchise ABN
         },
-        formValid: false,
         formDisabled: true,
+    },
+
+    mpExInfo: {
+        form: {},
+        data: {
+            custentity_mpex_customer: false, // is MPEX Customer
+            custentity_exp_mpex_weekly_usage: null, // MPEX Expected Usage
+            custentity_form_mpex_usage_per_week: null, // MPEX Weekly Usage
+        },
+        formDisabled: true,
+        weeklyUsageOptions: [],
+        weeklyUsageTable: [],
     },
 
     invoices: {
@@ -106,7 +117,8 @@ const state = {
         {value: 696160, text: 'Kerina Helliwell'},
         {value: 690145, text: 'David Gdanski'},
         {value: 668712, text: 'Belinda Urbani'},
-    ]
+    ],
+    yesNoOptions: [],
 };
 
 let getters = {
@@ -120,8 +132,15 @@ let getters = {
     franchisee : state => state.additionalInfo.franchisee,
 
     additionalInfoForm : state => state.additionalInfo.form,
-    additionalInfoFormValid : state => state.additionalInfo.formValid,
     additionalInfoFormDisabled : state => state.additionalInfo.formDisabled,
+    showAdditionalInfoSection : (state, getters, rootState) => {
+        let roles = [...financeRole, ...dataSysCoordinatorRole, ...mpAdminRole, ...adminRole];
+        return rootState.userRole &&
+            roles.includes(parseInt(rootState.userRole)) &&
+            parseInt(state.details.entitystatus) === 13 && state.internalId;
+    },
+
+    mpExInfo : state => state.mpExInfo,
 
     invoices : state => state.invoices.data,
     invoicesLoading : state => state.invoices.loading,
@@ -129,16 +148,11 @@ let getters = {
     invoicesStatuses : state => state.invoices.statuses,
     invoicePeriod : state => state.invoices.period,
     invoicesPeriods : state => state.invoices.periods,
-
-    showAdditionalInfoSection : (state, getters, rootState) => {
-        let roles = [...financeRole, ...dataSysCoordinatorRole, ...mpAdminRole, ...adminRole];
-        return rootState.userRole &&
-            roles.includes(parseInt(rootState.userRole)) &&
-            parseInt(state.details.entitystatus) === 13 && state.internalId;
-    },
     showInvoicesSection : (state) => {
         return !!state.internalId;
-    }
+    },
+
+    yesNoOptions : state => state.yesNoOptions,
 };
 
 const mutations = {
@@ -152,6 +166,8 @@ const mutations = {
 
     setInvoicesStatus : (state, status) => { state.invoices.status = status; },
     setInvoicesPeriod : (state, period) => { state.invoices.period = period; },
+
+    resetMpExInfoForm : state => { state.mpExInfo.form = {...state.mpExInfo.data}; },
 }
 
 let actions = {
@@ -172,11 +188,14 @@ let actions = {
 
         await Promise.allSettled([
             context.dispatch('getDetails', NS_MODULES),
+            context.dispatch('getMpExInfo', NS_MODULES),
+            context.dispatch('getYesNoOptions', NS_MODULES),
             context.dispatch('addresses/init', NS_MODULES, {root: true}),
             context.dispatch('contacts/init', NS_MODULES, {root: true}),
             context.dispatch('services/init', NS_MODULES, {root: true}),
             context.dispatch('item-pricing/init', NS_MODULES, {root: true}),
-        ])
+            context.dispatch('product-pricing/init', NS_MODULES, {root: true}),
+        ]);
 
         context.commit('setBusy', false);
     },
@@ -196,6 +215,9 @@ let actions = {
             for (let fieldId in context.state.additionalInfo.data)
                 context.state.additionalInfo.data[fieldId] = customerRecord.getValue({ fieldId });
 
+            for (let fieldId in context.state.mpExInfo.data)
+                context.state.mpExInfo.data[fieldId] = customerRecord.getValue({ fieldId });
+
             _getFranchiseInfo(context, NS_MODULES, context.state.details.partner);
 
             context.commit('disableDetailForm');
@@ -203,6 +225,7 @@ let actions = {
 
         context.commit('resetDetailForm');
         context.commit('resetAdditionalInfoForm');
+        context.commit('resetMpExInfoForm');
     },
     getInvoices : async context => {
         if (!context.state.internalId || !context.state.invoices.status || !context.state.invoices.period || context.rootState.errorNoNSModules)
@@ -260,6 +283,53 @@ let actions = {
             context.state.invoices.loading = false;
         }, 150);
     },
+    getMpExInfo : (context, NS_MODULES) => {
+        NS_MODULES.search.create({
+            type: 'customlist_form_mpex_usage_per_week',
+            columns: [ {name: 'name'}, {name: 'internalId'} ]
+        }).run().each(item => {
+            context.state.mpExInfo.weeklyUsageOptions.push({ value: item.getValue('internalId'), text: item.getValue('name') });
+            return true;
+        })
+
+
+        let customerSearch = NS_MODULES.search.load({
+            id: 'customsearch_customer_mpex_weekly_usage',
+            type: 'customer'
+        });
+
+        customerSearch.filters.push(NS_MODULES.search.createFilter({
+            name: 'internalid',
+            operator: NS_MODULES.search.Operator.IS,
+            values: context.state.internalId
+        }));
+
+        customerSearch.run().each(item => {
+            let weeklyUsage = item.getValue('custentity_actual_mpex_weekly_usage');
+
+            let parsedUsage = JSON.parse(weeklyUsage);
+
+            for (let x = 0; x < parsedUsage['Usage'].length; x++) {
+                let parts = parsedUsage['Usage'][x]['Week Used'].split('/');
+
+                context.state.mpExInfo.weeklyUsageTable.push({
+                    col1: parts[2] + '-' + ('0' + parts[1]).slice(-2) + '-' + ('0' + parts[0]).slice(-2),
+                    col2: parsedUsage['Usage'][x]['Count']
+                })
+            }
+
+            return true;
+        })
+    },
+    getYesNoOptions : (context, NS_MODULES) => {
+        NS_MODULES.search.create({
+            type: 'customlist107_2',
+            columns: [ {name: 'name'}, {name: 'internalId'} ]
+        }).run().each(item => {
+            context.state.yesNoOptions.push({ value: item.getValue('internalId'), text: item.getValue('name') });
+            return true;
+        })
+    },
     handleOldCustomerIdChanged : async (context) => {
         if (!context.state.detailForm.custentity_old_customer) return;
 
@@ -316,6 +386,33 @@ let actions = {
 
             for (let fieldId in context.state.additionalInfo.data)
                 customerRecord.setValue({fieldId, value: context.state.additionalInfo.data[fieldId]});
+
+            customerRecord.save({ignoreMandatoryFields: true});
+
+            await context.dispatch('getDetails', NS_MODULES);
+
+            context.commit('setBusy', false);
+            _displayBusyGlobalModal(context, false);
+        }, 250);
+    },
+    saveMpExInfo : context => {
+        context.commit('setBusy');
+        context.mpExInfo.formDisabled = true;
+        _displayBusyGlobalModal(context);
+
+        setTimeout(async () => {
+            context.state.mpExInfo.data = {...context.state.mpExInfo.form};
+
+            let NS_MODULES = await getNSModules();
+
+            let customerRecord = NS_MODULES.record.load({
+                type: NS_MODULES.record.Type.CUSTOMER,
+                id: context.state.internalId,
+                isDynamic: true
+            });
+
+            for (let fieldId in context.state.mpExInfo.data)
+                customerRecord.setValue({fieldId, value: context.state.mpExInfo.data[fieldId]});
 
             customerRecord.save({ignoreMandatoryFields: true});
 

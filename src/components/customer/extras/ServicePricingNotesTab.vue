@@ -21,7 +21,7 @@
 
             <b-col xl="6" cols="6">
                 <h2>Services</h2>
-                <b-table :items="assignedServices" :fields="serviceColumns" head-row-variant="light" hover show-empty :tbody-tr-class="rowClass">
+                <b-table :items="assignedServices" :fields="serviceColumns" head-row-variant="light" striped show-empty :tbody-tr-class="rowClass">
 
                     <template v-slot:cell(name)="{item}">
                         <b-input-group>
@@ -75,20 +75,20 @@
             <b-col xl="6" cols="6">
                 <h2>Item Pricing</h2>
 
-                <b-table :items="itemPricing" :fields="itemPricingColumns" head-row-variant="light" show-empty :tbody-tr-class="rowClass">
+                <b-table :items="itemPricing" :fields="itemPricingColumns" striped head-row-variant="light" show-empty :tbody-tr-class="rowClass">
                     <template v-slot:cell(name)="{item}">
                         <input class="form-control highlight-disabled" disabled :value="item.text">
                     </template>
                     <template v-slot:cell(price)="{item}">
-                        <input class="form-control highlight-disabled" disabled :value="'$ '+item.price">
+                        <input class="form-control highlight-disabled" disabled :value="'$'+item.price">
                     </template>
                 </b-table>
 
             </b-col>
 
             <b-col cols="12">
-                <b-button variant="primary" @click="goToServiceAndPricingPage">
-                    UPDATE SERVICES & FINANCIAL TAB
+                <b-button variant="primary" @click="goToServiceAndPricingPage" :disabled="busy" size="sm">
+                    Update Service & Financial Tab <b-icon icon="box-arrow-up-right" scale=".6"></b-icon>
                 </b-button>
             </b-col>
         </b-row>
@@ -209,5 +209,6 @@ export default {
 .highlight-disabled {
     color: black !important;
     border: 1px solid #cccccc !important;
+    font-size: inherit;
 }
 </style>
