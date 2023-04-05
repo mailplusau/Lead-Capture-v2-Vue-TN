@@ -13,6 +13,8 @@ const state = {
         title: '',
         body: '',
         busy: false,
+        persistent: true,
+        isError: false
     },
     industries: [],
     leadSources: [],

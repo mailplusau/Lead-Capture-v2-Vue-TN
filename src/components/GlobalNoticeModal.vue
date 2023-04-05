@@ -2,7 +2,8 @@
 
     <b-modal id="modal-contact-deletion" centered v-model="modalOpen" @hide="handleModalHide">
         <template v-slot:modal-header>
-            <h5 class="text-center">{{globalModal.title}}</h5>
+            <h5 class="text-center text-danger" v-if="globalModal.isError"><b-icon icon="exclamation-triangle"></b-icon> {{globalModal.title}}</h5>
+            <h5 class="text-center" v-else>{{globalModal.title}}</h5>
         </template>
 
         <b-row class="justify-content-center">
@@ -16,7 +17,7 @@
         </b-row>
 
         <template v-slot:modal-footer>
-            <b-button size="sm" :disabled="globalModal.busy" @click="modalOpen = false">Okie Dokie</b-button>
+            <b-button size="sm" @click="forceClose">Okie Dokie</b-button>
         </template>
     </b-modal>
 
@@ -25,10 +26,17 @@
 <script>
 export default {
     name: "GlobalNoticeModal",
+    data: () => ({
+        forcedClose: false,
+    }),
     methods: {
         handleModalHide(event) {
-            if(this.globalModal.busy) event.preventDefault();
+            if((this.globalModal.busy || this.globalModal.persistent) && !this.forcedClose) event.preventDefault();
         },
+        forceClose() {
+            this.forcedClose = true;
+            this.modalOpen = false;
+        }
     },
     computed: {
         globalModal() {
@@ -39,6 +47,7 @@ export default {
                 return this.globalModal.open;
             },
             set(val) {
+                if (val) this.forcedClose = false;
                 return this.$store.commit('setGlobalModal', val);
             }
         }
