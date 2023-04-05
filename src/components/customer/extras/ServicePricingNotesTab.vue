@@ -1,11 +1,11 @@
 <template>
     <b-tab title="Services & Pricing Notes" active>
         <b-row>
-            <b-col cols="12">
+            <b-col cols="12" class="mb-3">
                 <b-form-group
                     class="text-start"
                     label="Pricing Notes:"
-                    description="We will convert your text to lowercase instantly"
+                    description=""
                 >
                     <b-form-textarea v-model="pricingNotes.data" rows="3" no-resize :disabled="pricingNotes.disabled" ref="pricingNoteTextarea"></b-form-textarea>
                 </b-form-group>

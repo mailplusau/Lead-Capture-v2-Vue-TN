@@ -208,6 +208,8 @@ function _displayBusyGlobalModal(context, open = true) {
     context.rootState.globalModal.body = 'Saving Assigned Services. Please Wait...';
     context.rootState.globalModal.busy = open;
     context.rootState.globalModal.open = open;
+    context.rootState.globalModal.persistent = false;
+    context.rootState.globalModal.isError = false;
 }
 
 function _getServiceTypeNameFromServiceTypeId(context, serviceTypeId) {

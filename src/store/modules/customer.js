@@ -77,6 +77,25 @@ const state = {
         weeklyUsageTable: [],
     },
 
+    surveyInfo: {
+        form: {},
+        data: {
+            custentity_category_multisite: null, // is Multisite
+            custentity_category_multisite_link: '', // Multisite Link
+            custentity_mp_toll_zeevisit: null, // is Visited by Franchisee
+            custentity_mp_toll_zeevisit_memo: '', // Franchisee Visit Note
+            custentity_ap_mail_parcel: null, // is Using Mail/Parcel/Satchel Regularly
+            custentity_customer_express_post: null, // is Using Express Post
+            custentity_customer_local_couriers: null, // is Using Local Couriers
+            custentity_customer_po_box: null, // is Using PO Box
+            custentity_customer_bank_visit: null, // is Using Bank Visit
+            custentity_lead_type: null, // Lead Type or Classify Lead
+        },
+        formDisabled: true,
+        usageFrequencyOptions: [],
+        classifyLeadOptions: [],
+    },
+
     invoices: {
         data: [
             // { "id": 4196554,"status_text": "Paid In Full", "invoice_type": "", "invoice_link": "#", "statusref": "paidInFull", "trandate": "31/12/2022", "invoicenum": "Invoice #INV1050668", "amountremaining": ".00", "total": "448.68", "duedate": "15/03/2023" },
@@ -141,6 +160,7 @@ let getters = {
     },
 
     mpExInfo : state => state.mpExInfo,
+    surveyInfo : state => state.surveyInfo,
 
     invoices : state => state.invoices.data,
     invoicesLoading : state => state.invoices.loading,
@@ -168,6 +188,8 @@ const mutations = {
     setInvoicesPeriod : (state, period) => { state.invoices.period = period; },
 
     resetMpExInfoForm : state => { state.mpExInfo.form = {...state.mpExInfo.data}; },
+
+    resetSurveyInfoForm : state => { state.surveyInfo.form = {...state.surveyInfo.data}; },
 }
 
 let actions = {
@@ -190,6 +212,7 @@ let actions = {
             context.dispatch('getDetails', NS_MODULES),
             context.dispatch('getMpExInfo', NS_MODULES),
             context.dispatch('getYesNoOptions', NS_MODULES),
+            context.dispatch('getSurveyInfo', NS_MODULES),
             context.dispatch('addresses/init', NS_MODULES, {root: true}),
             context.dispatch('contacts/init', NS_MODULES, {root: true}),
             context.dispatch('services/init', NS_MODULES, {root: true}),
@@ -218,6 +241,9 @@ let actions = {
             for (let fieldId in context.state.mpExInfo.data)
                 context.state.mpExInfo.data[fieldId] = customerRecord.getValue({ fieldId });
 
+            for (let fieldId in context.state.surveyInfo.data)
+                context.state.surveyInfo.data[fieldId] = customerRecord.getValue({ fieldId });
+
             _getFranchiseInfo(context, NS_MODULES, context.state.details.partner);
 
             context.commit('disableDetailForm');
@@ -226,6 +252,7 @@ let actions = {
         context.commit('resetDetailForm');
         context.commit('resetAdditionalInfoForm');
         context.commit('resetMpExInfoForm');
+        context.commit('resetSurveyInfoForm');
     },
     getInvoices : async context => {
         if (!context.state.internalId || !context.state.invoices.status || !context.state.invoices.period || context.rootState.errorNoNSModules)
@@ -321,6 +348,39 @@ let actions = {
             return true;
         })
     },
+    getSurveyInfo : (context, NS_MODULES) => {
+        NS_MODULES.search.create({
+            type: 'customlist_usage_frequency',
+            columns: [{
+                name: 'name'
+            }, {
+                name: 'internalId'
+            }]
+        }).run().each(item => {
+            context.state.surveyInfo.usageFrequencyOptions.push({
+                value: item.getValue('internalId'),
+                text: item.getValue('name')
+            });
+
+            return true;
+        });
+
+        NS_MODULES.search.create({
+            type: 'customlist_classify_lead',
+            columns: [{
+                name: 'name'
+            }, {
+                name: 'internalId'
+            }]
+        }).run().each(item => {
+            context.state.surveyInfo.classifyLeadOptions.push({
+                value: item.getValue('internalId'),
+                text: item.getValue('name')
+            });
+
+            return true;
+        });
+    },
     getYesNoOptions : (context, NS_MODULES) => {
         NS_MODULES.search.create({
             type: 'customlist107_2',
@@ -397,7 +457,7 @@ let actions = {
     },
     saveMpExInfo : context => {
         context.commit('setBusy');
-        context.mpExInfo.formDisabled = true;
+        context.state.mpExInfo.formDisabled = true;
         _displayBusyGlobalModal(context);
 
         setTimeout(async () => {
@@ -420,6 +480,38 @@ let actions = {
 
             context.commit('setBusy', false);
             _displayBusyGlobalModal(context, false);
+        }, 250);
+    },
+    saveSurveyInfo : context => {
+        context.commit('setBusy');
+        context.state.surveyInfo.formDisabled = true;
+        _displayBusyGlobalModal(context);
+
+        setTimeout(async () => {
+            let NS_MODULES = await getNSModules();
+
+            try {
+
+                let customerRecord = NS_MODULES.record.load({
+                    type: NS_MODULES.record.Type.CUSTOMER,
+                    id: context.state.internalId,
+                    isDynamic: true
+                });
+
+                for (let fieldId in context.state.surveyInfo.data)
+                    customerRecord.setValue({fieldId, value: context.state.surveyInfo.form[fieldId]});
+
+                customerRecord.save({ignoreMandatoryFields: true});
+
+                await context.dispatch('getDetails', NS_MODULES);
+
+                _displayBusyGlobalModal(context, false);
+            } catch (e) {
+                console.log(e);
+                _displayErrorGlobalModal(context, 'Error while saving', e.message);
+            }
+
+            context.commit('setBusy', false);
         }, 250);
     },
 
@@ -477,6 +569,17 @@ function _displayBusyGlobalModal(context, open = true) {
     context.rootState.globalModal.body = 'Saving Customer\'s Details. Please Wait...';
     context.rootState.globalModal.busy = open;
     context.rootState.globalModal.open = open;
+    context.rootState.globalModal.persistent = false;
+    context.rootState.globalModal.isError = false;
+}
+
+function _displayErrorGlobalModal(context, title, message) {
+    context.rootState.globalModal.title = title;
+    context.rootState.globalModal.body = message;
+    context.rootState.globalModal.busy = false;
+    context.rootState.globalModal.open = true;
+    context.rootState.globalModal.persistent = true;
+    context.rootState.globalModal.isError = true;
 }
 
 function _getInvoiceURL(invoice_id) {
