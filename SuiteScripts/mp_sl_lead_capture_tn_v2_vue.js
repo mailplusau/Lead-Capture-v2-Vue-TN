@@ -12,7 +12,7 @@ let htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue.html';
 let nServerWidget, nSearch, nRender, nFile;
 
 
-define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file'], (serverWidget, render, search, file) => {
+define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file', 'N/log'], (serverWidget, render, search, file, log) => {
     nServerWidget = serverWidget;
     nSearch = search;
     nRender = render;
@@ -23,12 +23,14 @@ define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file'], (serverWidget, r
         if (request.method === "GET") {
 
             // if testMode param is present, we load the alternative html template. for testing and dev work only.
-            if (parseInt(request.parameters.testMode) === 1)
+            if (parseInt(request.parameters['testMode']) === 1)
                 htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue_test.html'
 
-            // Render the page using either inline form or standalone page
-            // _getStandalonePage(response)
-            _getInlineForm(response)
+            if (!_handleDataRequests(request.parameters['requestData'], response)){
+                // Render the page using either inline form or standalone page
+                // _getStandalonePage(response)
+                _getInlineForm(response)
+            }
 
         } else { // Request method should be POST (?)
             log.debug({
@@ -41,7 +43,6 @@ define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file'], (serverWidget, r
 
     return {onRequest};
 });
-
 
 // Render the page within a form element of NetSuite. This can cause conflict with NetSuite's stylesheets.
 function _getInlineForm(response) {
@@ -68,7 +69,6 @@ function _getInlineForm(response) {
     response.writePage(form);
 }
 
-
 // Render the htmlTemplateFile as a standalone page without any of NetSuite's baggage. However, this also means no
 // NetSuite module will be exposed to the Vue app. Thus, an api approach using Axios and structuring this Suitelet as
 // a http request handler will be necessary. For reference:
@@ -91,7 +91,6 @@ function _getStandalonePage(response) {
     response.write(pageRenderer.renderAsString());
 }
 
-
 // Search for the ID and URL of a given file name inside the NetSuite file cabinet
 function _getHtmlTemplate(htmlPageName) {
     const htmlPageData = {};
@@ -109,4 +108,66 @@ function _getHtmlTemplate(htmlPageName) {
     });
 
     return htmlPageData;
+}
+
+
+
+function _handleDataRequests(request, response) {
+    if (!request) return false;
+
+    try {
+        let {operation, data} = JSON.parse(request);
+
+        if (!operation) throw 'No operation specified.';
+
+        operations[operation](response, data);
+    } catch (e) {
+        _writeResponseJson(response, {error: e})
+    }
+
+    return true;
+}
+
+
+function _writeResponseJson(response, body) {
+    response.write({ output: JSON.stringify(body) });
+    response.addHeader({
+        name: 'Content-Type',
+        value: 'application/json; charset=utf-8'
+    });
+}
+
+
+const operations = {
+    'userNotesSearch': function (response, {customerId}) {
+        if (!customerId) throw 'No Customer ID specified.';
+
+        let notes = [];
+        nSearch.create({
+            type: nSearch.Type.NOTE,
+            filters: [
+                nSearch.createFilter({
+                    name: 'internalid',
+                    join: 'CUSTOMER',
+                    operator: nSearch.Operator.IS,
+                    values: customerId
+                })
+            ],
+            columns: [
+                nSearch.createColumn({name: "note", label: "Memo"}),
+                nSearch.createColumn({name: "author", label: "Author"}),
+                nSearch.createColumn({name: "notedate", label: "Date"})
+            ]
+        }).run().each(item => {
+            let note_date = item.getValue('notedate');
+            let author = item.getText('author');
+            let message = item.getValue('note');
+
+            notes.push({note_date, author, message});
+
+            return true;
+        })
+
+        _writeResponseJson(response, notes)
+    }
 }

@@ -68,6 +68,14 @@ const getters = {
 
 const mutations = {
     setGlobalModal :  (state, open = true) => { state.globalModal.open = open; },
+    displayErrorGlobalModal : (state, {title, message}) => {
+        state.globalModal.title = title;
+        state.globalModal.body = message;
+        state.globalModal.busy = false;
+        state.globalModal.open = true;
+        state.globalModal.persistent = true;
+        state.globalModal.isError = true;
+    }
 };
 
 const actions = {

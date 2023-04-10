@@ -33,7 +33,7 @@
             </div>
 
             <template v-if="isUsingRegularly">
-                <div class="col-6 mb-4">
+                <div class="col-8 mb-4">
                     <b-input-group prepend="Frequency of Mail / Parcels / Satchels">
                         <b-form-select v-model="frequency" :options="surveyInfo.usageFrequencyOptions" v-validate="'required'" data-vv-name="frequency"
                                        :class="errors.has('frequency') ? 'is-invalid' : ''" :disabled="surveyInfo.formDisabled"></b-form-select>

@@ -161,6 +161,9 @@ let getters = {
 
     mpExInfo : state => state.mpExInfo,
     surveyInfo : state => state.surveyInfo,
+    showExtraTabsSection : (state, getters, rootState, rootGetters) => {
+        return rootGetters['addresses/all'].length > 0 && state.internalId;
+    },
 
     invoices : state => state.invoices.data,
     invoicesLoading : state => state.invoices.loading,
@@ -218,6 +221,7 @@ let actions = {
             context.dispatch('services/init', NS_MODULES, {root: true}),
             context.dispatch('item-pricing/init', NS_MODULES, {root: true}),
             context.dispatch('product-pricing/init', NS_MODULES, {root: true}),
+            context.dispatch('user-notes/init', NS_MODULES, {root: true}),
         ]);
 
         context.commit('setBusy', false);
@@ -311,6 +315,8 @@ let actions = {
         }, 150);
     },
     getMpExInfo : (context, NS_MODULES) => {
+        if (!context.state.internalId) return;
+
         NS_MODULES.search.create({
             type: 'customlist_form_mpex_usage_per_week',
             columns: [ {name: 'name'}, {name: 'internalId'} ]
@@ -349,6 +355,8 @@ let actions = {
         })
     },
     getSurveyInfo : (context, NS_MODULES) => {
+        if (!context.state.internalId) return;
+
         NS_MODULES.search.create({
             type: 'customlist_usage_frequency',
             columns: [{
@@ -382,6 +390,8 @@ let actions = {
         });
     },
     getYesNoOptions : (context, NS_MODULES) => {
+        if (!context.state.internalId) return;
+
         NS_MODULES.search.create({
             type: 'customlist107_2',
             columns: [ {name: 'name'}, {name: 'internalId'} ]
@@ -483,7 +493,6 @@ let actions = {
         }, 250);
     },
     saveSurveyInfo : context => {
-        context.commit('setBusy');
         context.state.surveyInfo.formDisabled = true;
         _displayBusyGlobalModal(context);
 
@@ -510,8 +519,6 @@ let actions = {
                 console.log(e);
                 _displayErrorGlobalModal(context, 'Error while saving', e.message);
             }
-
-            context.commit('setBusy', false);
         }, 250);
     },
 
