@@ -7,13 +7,13 @@
             <div class="col-4 mb-4">
                 <b-input-group prepend="Invoice Type">
                     <b-form-select v-model="invoiceStatus" :disabled="loading"
-                                   :options="$store.getters['customer/invoicesStatuses']"></b-form-select>
+                                   :options="$store.getters['invoices/statuses']"></b-form-select>
                 </b-input-group>
             </div>
             <div class="col-4 mb-4">
                 <b-input-group prepend="Invoice Period">
                     <b-form-select v-model="invoicePeriod" :disabled="loading"
-                                   :options="$store.getters['customer/invoicesPeriods']"></b-form-select>
+                                   :options="$store.getters['invoices/periods']"></b-form-select>
                 </b-input-group>
             </div>
             <div class="col-4 mb-4">
@@ -121,27 +121,27 @@ export default {
             return 'Customer\'s Invoices'
         },
         invoices() {
-            return this.$store.getters['customer/invoices'];
+            return this.$store.getters['invoices/all'];
         },
         loading() {
-            return this.$store.getters['customer/invoicesLoading'];
+            return this.$store.getters['invoices/loading'];
         },
         invoiceStatus: {
             get() {
-                return this.$store.getters['customer/invoiceStatus'];
+                return this.$store.getters['invoices/status'];
             },
             set(val) {
-                this.$store.commit('customer/setInvoicesStatus', val);
-                if (val) this.$store.dispatch('customer/getInvoices');
+                this.$store.commit('invoices/setStatus', val);
+                if (val) this.$store.dispatch('invoices/getInvoices');
             }
         },
         invoicePeriod: {
             get() {
-                return this.$store.getters['customer/invoicePeriod'];
+                return this.$store.getters['invoices/period'];
             },
             set(val) {
-                this.$store.commit('customer/setInvoicesPeriod', val);
-                if (val) this.$store.dispatch('customer/getInvoices');
+                this.$store.commit('invoices/setPeriod', val);
+                if (val) this.$store.dispatch('invoices/getInvoices');
             }
         },
     }
