@@ -37,7 +37,7 @@
             </div>
             <div class="col-7 mb-4">
                 <b-input-group prepend="Account (main) email">
-                    <b-form-input v-model="detailForm.email" v-validate="'required|email'" data-vv-name="email"
+                    <b-form-input v-model="detailForm.email" v-validate="'required|email'" data-vv-name="email" @keydown.space.prevent
                                   :class="errors.has('email') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('email')">{{ errors.first('email') }}</b-form-invalid-feedback>
@@ -45,7 +45,7 @@
             </div>
             <div class="col-5 mb-4">
                 <b-input-group prepend="Account (main) phone">
-                    <b-form-input v-model="detailForm.altphone" v-validate="'required|digits:10|aus_phone'" data-vv-name="phone"
+                    <b-form-input v-model="detailForm.altphone" v-validate="'required|digits:10|aus_phone'" data-vv-name="phone" @keydown.space.prevent
                                   :class="errors.has('phone') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('phone')">{{ errors.first('phone') }}</b-form-invalid-feedback>
@@ -53,7 +53,7 @@
             </div>
             <div class="col-7 mb-4">
                 <b-input-group prepend="Day-to-day email">
-                    <b-form-input v-model="detailForm.custentity_email_service" v-validate="'required|email'" data-vv-name="alt_email"
+                    <b-form-input v-model="detailForm.custentity_email_service" v-validate="'required|email'" data-vv-name="alt_email" @keydown.space.prevent
                                   :class="errors.has('alt_email') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('alt_email')">{{ errors.first('alt_email') }}</b-form-invalid-feedback>
@@ -61,7 +61,7 @@
             </div>
             <div class="col-5 mb-4">
                 <b-input-group prepend="Day-to-day phone">
-                    <b-form-input v-model="detailForm.phone" v-validate="'required|digits:10|aus_phone'" data-vv-name="alt_phone"
+                    <b-form-input v-model="detailForm.phone" v-validate="'required|digits:10|aus_phone'" data-vv-name="alt_phone" @keydown.space.prevent
                                   :class="errors.has('alt_phone') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('alt_phone')">{{ errors.first('alt_phone') }}</b-form-invalid-feedback>
