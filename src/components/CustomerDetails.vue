@@ -4,21 +4,21 @@
             <div class="col-12">
                 <h1 class="text-center mp-header">Customer's Details</h1>
             </div>
-            <template v-if="hasInternalId">
-                <div class="col-6 mb-4">
-                    <b-input-group prepend="Internal ID">
-                        <b-form-input :value="$store.getters['customer/internalId']" disabled></b-form-input>
-                    </b-input-group>
-                </div>
-                <div class="col-6 mb-4">
-                    <b-input-group prepend="Account Manager">
-                        <b-form-select v-model="detailForm.custentity_mp_toll_salesrep" v-validate="'required'" data-vv-name="account_manager"
-                                       :options="$store.getters['customer/accountManagers']" :disabled="formDisabled"></b-form-select>
 
-                        <b-form-invalid-feedback :state="!errors.has('account_manager')">{{ errors.first('account_manager') }}</b-form-invalid-feedback>
-                    </b-input-group>
-                </div>
-            </template>
+            <div class="col-6 mb-4" v-show="hasInternalId">
+                <b-input-group prepend="Internal ID">
+                    <b-form-input :value="$store.getters['customer/internalId']" disabled></b-form-input>
+                </b-input-group>
+            </div>
+            <div class="col-6 mb-4" v-show="hasInternalId">
+                <b-input-group prepend="Account Manager">
+                    <b-form-select v-model="detailForm.custentity_mp_toll_salesrep" v-validate="hasInternalId ? 'required' : ''" data-vv-name="account_manager"
+                                   :options="$store.getters['customer/accountManagers']" :disabled="formDisabled"></b-form-select>
+
+                    <b-form-invalid-feedback :state="!errors.has('account_manager')">{{ errors.first('account_manager') }}</b-form-invalid-feedback>
+                </b-input-group>
+            </div>
+
             <div class="col-8 mb-4">
                 <b-input-group prepend="Company Name">
                     <b-form-input v-model="detailForm.companyname" v-validate="'required|min:5'" data-vv-name="company_name"
@@ -37,7 +37,7 @@
             </div>
             <div class="col-7 mb-4">
                 <b-input-group prepend="Account (main) email">
-                    <b-form-input v-model="detailForm.email" v-validate="'required|email'" data-vv-name="email" @keydown.space.prevent
+                    <b-form-input v-model="detailForm.email" v-validate="'email'" data-vv-name="email" @keydown.space.prevent
                                   :class="errors.has('email') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('email')">{{ errors.first('email') }}</b-form-invalid-feedback>
@@ -45,7 +45,7 @@
             </div>
             <div class="col-5 mb-4">
                 <b-input-group prepend="Account (main) phone">
-                    <b-form-input v-model="detailForm.altphone" v-validate="'required|digits:10|aus_phone'" data-vv-name="phone" @keydown.space.prevent
+                    <b-form-input v-model="detailForm.altphone" v-validate="'digits:10|aus_phone'" data-vv-name="phone" @keydown.space.prevent
                                   :class="errors.has('phone') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('phone')">{{ errors.first('phone') }}</b-form-invalid-feedback>
@@ -84,29 +84,27 @@
                 </b-input-group>
             </div>
 
-            <template v-if="showOldCustomerFields">
-                <div class="col-6 mb-4">
-                    <b-input-group prepend="Old Franchisee">
-                        <b-form-select v-model="detailForm.custentity_old_zee"
-                                       :options="$store.getters['franchisees']" disabled></b-form-select>
+            <div class="col-6 mb-4" v-show="showOldCustomerFields">
+                <b-input-group prepend="Old Franchisee">
+                    <b-form-select v-model="detailForm.custentity_old_zee"
+                                   :options="$store.getters['franchisees']" disabled></b-form-select>
 
-                        <b-form-invalid-feedback :state="!oldCustomerIdInvalid">
-                            Please input the valid and correct ID for Old Customer ID field.
-                        </b-form-invalid-feedback>
-                    </b-input-group>
-                </div>
-                <div class="col-6 mb-4">
-                    <b-input-group prepend="Old Customer ID">
-                        <b-form-input v-model="detailForm.custentity_old_customer" v-validate="'required|numeric'" data-vv-name="old_customer_id"
-                                      :class="errors.has('old_customer_id') ? 'is-invalid' : ''" :disabled="formDisabled || oldCustomerIdFieldDisabled"></b-form-input>
+                    <b-form-invalid-feedback :state="!oldCustomerIdInvalid">
+                        Please input the valid and correct ID for Old Customer ID field.
+                    </b-form-invalid-feedback>
+                </b-input-group>
+            </div>
+            <div class="col-6 mb-4" v-show="showOldCustomerFields">
+                <b-input-group prepend="Old Customer ID">
+                    <b-form-input v-model="detailForm.custentity_old_customer" v-validate="showOldCustomerFields ? 'required|numeric' : ''" data-vv-name="old_customer_id"
+                                  :class="errors.has('old_customer_id') ? 'is-invalid' : ''" :disabled="formDisabled || oldCustomerIdFieldDisabled"></b-form-input>
 
-                        <b-form-invalid-feedback :state="!errors.has('old_customer_id') || !oldCustomerIdInvalid">
-                            {{ errors.first('old_customer_id') }}
-                            {{oldCustomerIdInvalid ? 'Old Customer ID is invalid.' : ''}}
-                        </b-form-invalid-feedback>
-                    </b-input-group>
-                </div>
-            </template>
+                    <b-form-invalid-feedback :state="!errors.has('old_customer_id') || !oldCustomerIdInvalid">
+                        {{ errors.first('old_customer_id') }}
+                        {{oldCustomerIdInvalid ? 'Old Customer ID is invalid.' : ''}}
+                    </b-form-invalid-feedback>
+                </b-input-group>
+            </div>
 
             <div class="col-6 mb-4">
                 <b-input-group prepend="Industry">
