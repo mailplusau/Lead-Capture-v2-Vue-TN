@@ -163,6 +163,8 @@ let actions = {
             context.state.internalId = customParams['custid'] || null;
         }
 
+        _updateFormTitleAndHeader(context);
+
         let NS_MODULES = await getNSModules();
 
         await Promise.allSettled([
@@ -201,6 +203,8 @@ let actions = {
 
             for (let fieldId in context.state.surveyInfo.data)
                 context.state.surveyInfo.data[fieldId] = customerRecord.getValue({ fieldId });
+
+            _updateFormTitleAndHeader(context);
 
             _getFranchiseInfo(context, NS_MODULES, context.state.details.partner);
 
@@ -476,6 +480,23 @@ function _displayBusyGlobalModal(context, open = true) {
     context.rootState.globalModal.open = open;
     context.rootState.globalModal.persistent = false;
     context.rootState.globalModal.isError = false;
+}
+
+function _updateFormTitleAndHeader(context) {
+    let title, header;
+
+    if (parseInt(context.state.details['entitystatus']) === 13) {
+        header = 'Customer Details';
+    } else if (context.state.internalId) {
+        header = 'Prospect Details';
+    } else {
+        header = 'Prospect Capture Form';
+    }
+
+    title = header + ' - NetSuite Australia (Mail Plus Pty Ltd)';
+
+    document.querySelector('h1.uir-record-type').setHTML(header);
+    document.title = title;
 }
 
 export default {
