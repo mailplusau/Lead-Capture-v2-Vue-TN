@@ -55,7 +55,7 @@ const getters = {
     ERROR_NO_NS_MODULES : state => state.errorNoNSModules,
     industries : state => state.industries,
     leadSources : state => state.leadSources,
-    franchisees : state => state.franchisees,
+    franchisees : state => state.franchisees.filter(item => item.text.toLowerCase().substring(0, 4) !== 'old '),
     roles : state => state.roles,
     statuses : state => state.statuses,
     states : state => state.states,
