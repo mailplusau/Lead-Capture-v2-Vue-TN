@@ -81,7 +81,7 @@ const mutations = {
 const actions = {
     init : async (context) => {
         try {
-            document.querySelector('h1.uir-record-type').setHTML('');
+            document.querySelector('h1.uir-record-type').innerHTML = '';
             await getNSModules();
             console.log('NS_MODULES found !');
             context.state.errorNoNSModules = false;
