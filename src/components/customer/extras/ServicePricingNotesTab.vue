@@ -7,7 +7,7 @@
                     label="Pricing Notes:"
                     description=""
                 >
-                    <b-form-textarea v-model="pricingNotes.data" rows="3" no-resize :disabled="pricingNotes.disabled" ref="pricingNoteTextarea"></b-form-textarea>
+                    <b-form-textarea v-model="additionalInfo.custentity_customer_pricing_notes" rows="3" no-resize :disabled="pricingNotes.disabled" ref="pricingNoteTextarea"></b-form-textarea>
                 </b-form-group>
             </b-col>
             <b-col cols="12" class="mb-4">
@@ -137,15 +137,14 @@ export default {
             this.pricingNotes.disabled = false;
         },
         resetForm() {
-            this.pricingNotes.data = this.additionalInfo.custentity_customer_pricing_notes;
+            this.$store.commit('customer/resetAdditionalInfoForm');
         },
         cancelEditing() {
-            this.pricingNotes.data = this.additionalInfo.custentity_customer_pricing_notes;
+            this.$store.commit('customer/resetAdditionalInfoForm');
             this.pricingNotes.disabled = true;
         },
         saveForm() {
             this.pricingNotes.disabled = true;
-            this.additionalInfo.custentity_customer_pricing_notes = this.pricingNotes.data;
             this.$store.dispatch('customer/saveAdditionalInfo');
         },
 
@@ -192,11 +191,6 @@ export default {
             return this.$store.getters['item-pricing/get']
         }
     },
-    watch: {
-        'additionalInfo.custentity_customer_pricing_notes': function (val) {
-            this.pricingNotes.data = val;
-        }
-    }
 }
 </script>
 
