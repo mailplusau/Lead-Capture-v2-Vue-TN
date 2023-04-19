@@ -130,6 +130,10 @@ const actions = {
         await _fetchDataForHtmlSelect(context, context.state.invoiceCycles,
             null, 'customlist_invoicing_cyle', 'internalId', 'name');
     },
+    redirectToNetSuiteCustomerPage : context => {
+        if (context.rootGetters['customer/internalId'])
+            window.location.href = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + context.rootGetters['customer/internalId'];
+    },
 
     saveNewCustomer : async context => {
         context.state.globalModal.title = 'New Customer';

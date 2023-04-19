@@ -1,5 +1,13 @@
 <template>
     <div id="app" class="container">
+        <div class="row justify-content-start">
+            <div class="col-auto">
+                <b-button @click="$store.dispatch('redirectToNetSuiteCustomerPage')" size="sm" variant="outline-success" class="mb-3">
+                    <b-icon icon="arrow-left-circle"></b-icon> Go Back To Customer's Page
+                </b-button>
+            </div>
+        </div>
+
         <CustomerDetails ref="customerDetails"/>
 
         <AdditionalInformation />
@@ -94,7 +102,7 @@ export default {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    margin-top: 60px;
+    margin-top: 0;
 }
 .custom-select {
     position: relative;
