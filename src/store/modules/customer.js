@@ -219,6 +219,7 @@ let actions = {
     getMpExInfo : (context, NS_MODULES) => {
         if (!context.state.internalId) return;
 
+        context.state.mpExInfo.weeklyUsageOptions.push({ value: '', text: 'None' });
         NS_MODULES.search.create({
             type: 'customlist_form_mpex_usage_per_week',
             columns: [ {name: 'name'}, {name: 'internalId'} ]

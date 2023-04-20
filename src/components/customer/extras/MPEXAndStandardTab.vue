@@ -111,6 +111,14 @@ export default {
         productPricing() {
             return this.$store.getters['product-pricing/get']
         }
+    },
+    watch: {
+        'mpExInfo.form.custentity_mpex_customer': function (val) {
+            if (parseInt(val) === 2) { // 2 means No
+                this.mpExInfo.form.custentity_form_mpex_usage_per_week = '';
+                this.mpExInfo.form.custentity_exp_mpex_weekly_usage = '';
+            }
+        }
     }
 }
 </script>
