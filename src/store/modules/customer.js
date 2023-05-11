@@ -35,6 +35,8 @@ const state = {
 
         custentity_maap_bankacctno: null,
         custentity_maap_bankacctno_parent: null,
+
+        custentity_date_lead_entered: new Date(),
     },
     detailForm: {},
     detailFormValid: false,
@@ -433,6 +435,8 @@ let actions = {
                 let customerRecord = NS_MODULES.record.create({
                     type: NS_MODULES.record.Type.LEAD,
                 });
+
+                context.state.details.custentity_date_lead_entered = new Date();
 
                 for (let fieldId in context.state.details)
                     customerRecord.setValue({fieldId, value: context.state.details[fieldId]});
