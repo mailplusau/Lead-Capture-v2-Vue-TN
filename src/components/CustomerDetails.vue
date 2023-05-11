@@ -29,7 +29,7 @@
             </div>
             <div class="col-4 mb-4">
                 <b-input-group prepend="ABN">
-                    <b-form-input v-model="detailForm.vatregnumber" v-validate="'required|aus_abn|min:9'" data-vv-name="abn"
+                    <b-form-input v-model="detailForm.vatregnumber" v-validate="detailForm.vatregnumber ? 'aus_abn|min:9' : ''" data-vv-name="abn"
                                   :class="errors.has('abn') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('abn')">{{ errors.first('abn') }}</b-form-invalid-feedback>
