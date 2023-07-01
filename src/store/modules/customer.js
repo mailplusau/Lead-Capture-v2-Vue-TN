@@ -31,7 +31,8 @@ const state = {
         custentity_mp_toll_salesrep: '', // Account Manager ID
 
         custentity_service_fuel_surcharge: 1, // 1: yes, 2: no, 3: not included
-        custentity_service_fuel_surcharge_percen: 9.5, // 9.5% is default
+        custentity_service_fuel_surcharge_percen: 12.4, // 12% is new rate
+        custentity_mpex_surcharge_rate: 13.85, // TOLL surcharge rate
 
         custentity_maap_bankacctno: null,
         custentity_maap_bankacctno_parent: null,
@@ -99,7 +100,7 @@ const state = {
     accountManagers: [
         {value: 668711, text: 'Lee Russell'},
         {value: 696160, text: 'Kerina Helliwell'},
-        {value: 690145, text: 'David Gdanski'},
+        // {value: 690145, text: 'David Gdanski'},
         {value: 668712, text: 'Belinda Urbani'},
     ],
     yesNoOptions: [],
