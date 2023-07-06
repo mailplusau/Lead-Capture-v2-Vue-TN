@@ -38,6 +38,11 @@ const state = {
         custentity_maap_bankacctno_parent: null,
 
         custentity_date_lead_entered: new Date(),
+
+        custentity_invoice_method: 2, // Invoice method: Email (default)
+        custentity_invoice_by_email: true, // Invoice by email
+        custentity18: true, // EXCLUDE FROM BATCH PRINTING
+
     },
     detailForm: {},
     detailFormValid: false,
