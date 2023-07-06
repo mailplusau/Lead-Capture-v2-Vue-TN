@@ -49,7 +49,7 @@
             </div>
             <div class="col-6 mb-4">
                 <b-input-group prepend="Account CC Email">
-                    <b-form-input v-model="additionalInfo.custentity_accounts_cc_email" v-validate="'required|email'" data-vv-name="accounts_cc_email"
+                    <b-form-input v-model="additionalInfo.custentity_accounts_cc_email" v-validate="'email'" data-vv-name="accounts_cc_email"
                                   :class="errors.has('accounts_cc_email') ? 'is-invalid' : ''" :disabled="formDisabled"></b-form-input>
 
                     <b-form-invalid-feedback :state="!errors.has('accounts_cc_email')">{{ errors.first('accounts_cc_email') }}</b-form-invalid-feedback>

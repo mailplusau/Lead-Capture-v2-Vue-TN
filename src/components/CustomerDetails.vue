@@ -10,7 +10,7 @@
                     <b-form-input :value="$store.getters['customer/internalId']" disabled></b-form-input>
                 </b-input-group>
             </div>
-            <div class="col-6 mb-4" v-show="hasInternalId">
+            <div class="col-6 mb-4">
                 <b-input-group prepend="Account Manager">
                     <b-form-select v-model="detailForm.custentity_mp_toll_salesrep" v-validate="hasInternalId ? 'required' : ''" data-vv-name="account_manager"
                                    :options="$store.getters['customer/accountManagers']" :disabled="formDisabled"></b-form-select>
