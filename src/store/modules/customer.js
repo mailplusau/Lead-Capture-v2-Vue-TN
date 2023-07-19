@@ -60,6 +60,8 @@ const state = {
             custentity_finance_terms: null, // Customer's Term
 
             custentity_customer_pricing_notes: '', // Pricing Notes
+
+            custentity_portal_cc_payment: '', // Portal Credit Card Payment
         },
         franchisee: {
             companyname: null, // Franchisee name

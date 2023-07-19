@@ -14,7 +14,7 @@
                     <b-form-input :value="details.custentity_maap_bankacctno_parent" disabled></b-form-input>
                 </b-input-group>
             </div>
-            <div class="col-12 mb-4">
+            <div class="col-6 mb-4">
                 <b-input-group prepend="Franchisee Name">
                     <b-form-input :value="franchisee.companyname" disabled></b-form-input>
                 </b-input-group>
@@ -38,6 +38,16 @@
                 <b-input-group prepend="Franchisee Phone">
                     <b-form-input :value="franchisee.custentity2" disabled></b-form-input>
                 </b-input-group>
+            </div>
+            <div class="col-6 mb-4">
+                <b-input-group prepend="Portal Credit Card Payment">
+                    <b-form-select v-model="additionalInfo.custentity_portal_cc_payment" :options="$store.getters['customer/yesNoOptions']"
+                                   v-validate="'required'" data-vv-name="portal_cc_payment"
+                                   :class="errors.has('portal_cc_payment') ? 'is-invalid' : ''"
+                                   :disabled="formDisabled"></b-form-select>
+                </b-input-group>
+
+                <b-form-invalid-feedback :state="!errors.has('portal_cc_payment')">{{ errors.first('portal_cc_payment') }}</b-form-invalid-feedback>
             </div>
             <div class="col-6 mb-4">
                 <b-input-group prepend="Invoice Method">
