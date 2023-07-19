@@ -45,12 +45,27 @@
             </b-col>
         </b-row>
 
-        <b-row>
+        <b-row class="justify-content-end">
             <div class="col-12">
                 <h2>MPEX - Weekly Usage</h2>
 
                 <b-table :items="mpExInfo.weeklyUsageTable" :fields="weeklyUsageColumns" head-row-variant="light" striped show-empty
-                         label-sort-asc="" label-sort-desc="" label-sort-clear=""></b-table>
+                         label-sort-asc="" label-sort-desc="" label-sort-clear=""
+                         :sort-by.sync="weeklyUsageTable.sortBy" :sort-desc.sync="weeklyUsageTable.sortDesc"
+                         :per-page="weeklyUsageTable.perPage" :current-page="weeklyUsageTable.currentPage"></b-table>
+
+            </div>
+            <div class="col-auto">
+                <b-input-group prepend="Items to show per page">
+                    <b-form-select v-model="weeklyUsageTable.perPage" :options="perPageOptions"></b-form-select>
+                </b-input-group>
+            </div>
+            <div class="col-auto">
+                <b-pagination
+                    v-model="weeklyUsageTable.currentPage"
+                    :total-rows="mpExInfo.weeklyUsageTable.length"
+                    :per-page="weeklyUsageTable.perPage"
+                ></b-pagination>
             </div>
         </b-row>
     </b-tab>
@@ -76,11 +91,20 @@ export default {
         weeklyUsageColumns: [
             {key: 'col1', label: 'Week Used', sortable: true},
             {key: 'col2', label: 'Usage Count', sortable: true}
-        ]
+        ],
+        weeklyUsageTable: {
+            sortBy: 'col1',
+            sortDesc: true,
+            perPage: 5,
+            currentPage: 0,
+        },
+        perPageOptions: [
+            5, 10, 15, 25, 50
+        ],
     }),
     methods: {
         goToProductPricing() {
-            let url = nlapiResolveURL('SUITELET', 'customscript_sl2_prod_pricing_page', 'customdeploy1');
+            let url = window['nlapiResolveURL']('SUITELET', 'customscript_sl2_prod_pricing_page', 'customdeploy1');
             url += '&customerid=' + parseInt(this.$store.getters['customer/internalId']);
 
             window.open(url, "_self",
