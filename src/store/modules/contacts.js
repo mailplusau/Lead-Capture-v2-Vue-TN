@@ -70,6 +70,8 @@ const actions = {
             }
         } else _resetContactForm(context);
 
+        if (!context.state.contacts.length) context.state.contactForm.contactrole = '-10'; // Primary Contact
+
         context.state.contactModal = true;
     },
     closeContactModal : context => { context.state.contactModal = false; },
@@ -86,7 +88,9 @@ const actions = {
                 _saveContactToNetSuite(NS_MODULES, context.state.contactForm);
             } else {
 
-                if (context.state.contactForm.internalid) { // we still have local id for these cibtacts to make it easy to edit them
+                context.state.contactForm.email = context.state.contactForm.email || 'abc@abc.com';
+
+                if (context.state.contactForm.internalid) { // we still have local id for these contacts to make it easy to edit them
                     let index = context.state.contacts.findIndex(item => item.internalid === context.state.contactForm.internalid);
                     context.state.contacts.splice(index, 1, {
                         ...context.state.contactForm,

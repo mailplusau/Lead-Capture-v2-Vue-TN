@@ -1,4 +1,5 @@
 import getNSModules from '../../utils/ns-modules';
+import axios from 'axios';
 
 // 1001, 1031 and 1023 are finance roles
 // 1032 is the Data Systems Co-ordinator role
@@ -8,6 +9,13 @@ const financeRole = [1001, 1031, 1023];
 const dataSysCoordinatorRole = [1032];
 const mpAdminRole = [1006];
 const adminRole = [3];
+
+// August 2023 rate according to https://mailplus.com.au/surcharge/
+const defaultValues = {
+    expressFuelSurcharge: 14.13, // custentity_mpex_surcharge_rate
+    standardFuelSurcharge: 6.6, // custentity_sendle_fuel_surcharge
+    serviceFuelSurcharge: 10.40, // custentity_service_fuel_surcharge_percen
+}
 
 const state = {
     internalId: null, // this is the customer ID
@@ -31,8 +39,12 @@ const state = {
         custentity_mp_toll_salesrep: '', // Account Manager ID
 
         custentity_service_fuel_surcharge: 1, // 1: yes, 2: no, 3: not included
-        custentity_service_fuel_surcharge_percen: 12.4, // 12% is new rate
-        custentity_mpex_surcharge_rate: 13.85, // TOLL surcharge rate
+        custentity_service_fuel_surcharge_percen: defaultValues.serviceFuelSurcharge, // Service fuel surcharge
+
+        custentity_mpex_surcharge: 1,  // 1: yes, 2: no
+        custentity_mpex_surcharge_rate: defaultValues.expressFuelSurcharge, // Express fuel surcharge
+
+        custentity_sendle_fuel_surcharge: defaultValues.standardFuelSurcharge, // Standard fuel surcharge
 
         custentity_maap_bankacctno: null,
         custentity_maap_bankacctno_parent: null,
@@ -43,6 +55,10 @@ const state = {
         custentity_invoice_by_email: true, // Invoice by email
         custentity18: true, // EXCLUDE FROM BATCH PRINTING
 
+        custentity_operation_notes: '',
+
+        custentity_brochure_handed_over: 2, // Brochure Handed Over | 1. Yes | 2. No
+        custentity_expecting_call: 2, // Expecting a Call
     },
     detailForm: {},
     detailFormValid: false,
@@ -194,6 +210,14 @@ let actions = {
     },
     getDetails : (context, NS_MODULES) => {
         if (!context.state.internalId) {
+            if (context.rootGetters['userRole'] === 1000) { // franchisee mode, prefill some fields
+                let franchiseeRecord = NS_MODULES.record.load({type: 'partner', id: context.rootGetters['userId']});
+                context.state.details.partner = context.rootGetters['userId'];
+                context.state.details.custentity_mp_toll_salesrep = franchiseeRecord.getValue({fieldId: 'custentity_sales_rep_assigned'});
+                context.state.details.leadsource = '-4'; // Franchisee Generated
+                context.state.details.custentity_industry_category = 19; // Others
+            }
+
             context.commit('disableDetailForm', false);
         } else {
             let customerRecord = NS_MODULES.record.load({
@@ -445,6 +469,7 @@ let actions = {
                 });
 
                 context.state.details.custentity_date_lead_entered = new Date();
+                context.state.details.custentity_email_service = context.state.details.custentity_email_service || 'abc@abc.com';
 
                 for (let fieldId in context.state.details)
                     customerRecord.setValue({fieldId, value: context.state.details[fieldId]});
@@ -453,10 +478,49 @@ let actions = {
 
                 _updateOldCustomer(NS_MODULES, context, customerId);
 
+                // Send email to sales rep
+                if (context.rootGetters['userRole'] === 1000 && context.state.details.entitystatus === 57) {
+                    let customerRecord = NS_MODULES.record.load({type: 'customer', id: customerId});
+                    let franchiseeRecord = NS_MODULES.record.load({type: 'partner', id: context.rootGetters['userId']});
+                    let customerLink = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + customerId;
+                    let customerName = customerRecord.getValue({fieldId: 'entityid'}) + ' ' + customerRecord.getValue({fieldId: 'companyname'});
+                    let emailBody = '';
+
+                    emailBody += 'A Hot Lead has been entered by franchisee ' + franchiseeRecord.getValue({fieldId: 'companyname'});
+                    emailBody += 'Customer Name: ' + customerName + '<br>';
+                    emailBody += '<a href="' + customerLink + '" target="_blank">' + customerLink + '</a>'
+
+                    // Retrieve sales rep's email from backend. Client script can't access employee records.
+                    let {data, error} = await axios.get(window.location.href, {
+                        params: {
+                            requestData: JSON.stringify({
+                                operation: 'getEmployeeEmail',
+                                data: {
+                                    employeeId: context.state.details.custentity_mp_toll_salesrep
+                                }
+                            })
+                        }
+                    });
+
+                    if (error) console.error(error)
+                    else if (data) {
+                        NS_MODULES.email.send({
+                            author: 112209,
+                            subject: 'Sales HOT Lead - Zee Generated -' + customerName,
+                            body: emailBody,
+                            recipients: [data],
+                            cc: ['luke.forbes@mailplus.com.au'],
+                            relatedRecords: {
+                                entityId: customerId
+                            }
+                        });
+                    }
+                }
+
                 resolve(customerId);
             }, 200);
         });
-    }
+    },
 };
 
 function _updateOldCustomer(NS_MODULES, context, newCustomerId) {

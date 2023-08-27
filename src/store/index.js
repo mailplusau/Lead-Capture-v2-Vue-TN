@@ -2,12 +2,15 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import modules from './modules';
 import getNSModules from '../utils/ns-modules';
+import axios from 'axios';
 
 Vue.use(Vuex)
 
 const state = {
     errorNoNSModules: true,
     userRole: null,
+    userId: null,
+    testMode: false,
     globalModal: {
         open: false,
         title: '',
@@ -61,6 +64,8 @@ const getters = {
     states : state => state.states,
     globalModal : state => state.globalModal,
     userRole : state => state.userRole,
+    userId : state => state.userId,
+    testMode : state => state.testMode,
     invoiceMethods : state => state.invoiceMethods,
     invoiceCycles : state => state.invoiceCycles,
     terms : state => state.terms,
@@ -81,6 +86,11 @@ const mutations = {
 const actions = {
     init : async (context) => {
         try {
+            const params = new Proxy(new URLSearchParams(window.location.search), {
+                get: (searchParams, prop) => searchParams.get(prop),
+            });
+
+            context.state.testMode = !!params['testMode'];
             document.querySelector('h1.uir-record-type').innerHTML = '';
             await getNSModules();
             console.log('NS_MODULES found !');
@@ -120,7 +130,9 @@ const actions = {
     },
     getUserRole : async context => {
         let NS_MODULES = await getNSModules();
-        context.state.userRole = NS_MODULES.runtime.getCurrentUser().role;
+
+        context.state.userRole = context.state.testMode ? 1000 : parseInt(NS_MODULES.runtime.getCurrentUser().role);
+        context.state.userId = context.state.testMode ? 779884 : parseInt(NS_MODULES.runtime.getCurrentUser().id);
     },
     getInvoiceMethods : async context => {
         await _fetchDataForHtmlSelect(context, context.state.invoiceMethods,
@@ -136,29 +148,44 @@ const actions = {
     },
 
     saveNewCustomer : async context => {
-        context.state.globalModal.title = 'New Customer';
-        context.state.globalModal.body = 'Creating New Customer. Please Wait...';
-        context.state.globalModal.busy = true;
-        context.state.globalModal.open = true;
+        if (!context.getters['addresses/all'].length) {
+            context.commit('displayErrorGlobalModal', {title: 'Missing Address', message: 'Please add at least 1 address for this lead'})
+            return;
+        }
 
-        let customerId = await context.dispatch('customer/saveNewCustomer');
-        console.log('New customer id is ', customerId);
+        if (context.state.userRole === 1000 && context.getters['customer/detailForm'].entitystatus === 57 && !context.getters['contacts/all'].length) {
+            context.commit('displayErrorGlobalModal', {title: 'Missing Contact', message: 'Please add at least 1 contact for this lead'})
+            return;
+        }
 
-        await Promise.allSettled([
-            context.dispatch('addresses/saveAddressesToNewCustomer', customerId),
-            context.dispatch('contacts/saveContactsToNewCustomer', customerId)
-        ]);
+        if (context.state.testMode)
+            console.log('Creating new customer!')
+        else {
+            context.state.globalModal.title = 'New Customer';
+            context.state.globalModal.body = 'Creating New Customer. Please Wait...';
+            context.state.globalModal.busy = true;
+            context.state.globalModal.open = true;
 
-        // context.state.globalModal.busy = false;
-        let count = 0;
-        let tmp = setInterval(() => {
-            context.state.globalModal.body = 'New Customer Created! Redirecting in ' + (3-count) + '...';
-            if (count >= 3) {
-                clearInterval(tmp);
-                // window.location.href = 'https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=1706&deploy=1&custid=' + customerId;
-                window.location.href = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + customerId;
-            } else count++;
-        }, 1000)
+            let customerId = await context.dispatch('customer/saveNewCustomer');
+            console.log('New customer id is ', customerId);
+
+            await Promise.allSettled([
+                context.dispatch('addresses/saveAddressesToNewCustomer', customerId),
+                context.dispatch('contacts/saveContactsToNewCustomer', customerId)
+            ]);
+
+            await _createProductPricing(context, customerId);
+
+            let count = 0;
+            let tmp = setInterval(() => {
+                context.state.globalModal.body = 'New Customer Created! Redirecting in ' + (3-count) + '...';
+                if (count >= 3) {
+                    clearInterval(tmp);
+                    // window.location.href = 'https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=1706&deploy=1&custid=' + customerId;
+                    window.location.href = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + customerId;
+                } else count++;
+            }, 1000)
+        }
     }
 
 };
@@ -179,6 +206,25 @@ async function _fetchDataForHtmlSelect(context, stateObject, id, type, valueColu
     });
 }
 
+async function _createProductPricing(context, customerId) {
+    let index = context.rootGetters['addresses/all'].findIndex(item => item.defaultshipping);
+
+    if (index >= 0) {
+        let address = context.rootGetters['addresses/all'][index];
+        await axios.get(window.location.href, {
+            params: {
+                requestData: JSON.stringify({
+                    operation: 'createProductPricing',
+                    data: {
+                        customerId,
+                        city: address.city,
+                        postcode: address.zip
+                    }
+                })
+            }
+        });
+    }
+}
 
 const store = new Vuex.Store({
     state,

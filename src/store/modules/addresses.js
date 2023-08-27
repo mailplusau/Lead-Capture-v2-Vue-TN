@@ -181,7 +181,15 @@ const actions = {
                 }, 250);
             } else tempFunc();
 
-        } else _resetAddressForm(context);
+        } else {
+            _resetAddressForm(context);
+
+            // make the first address default shipping and billing
+            if (!context.state.addresses.length) {
+                context.state.addressSublistForm.defaultbilling = true;
+                context.state.addressSublistForm.defaultshipping = true;
+            }
+        }
 
         context.state.addressModal = true;
     },

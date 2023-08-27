@@ -1,6 +1,6 @@
 <template>
     <div id="app" class="container">
-        <div class="row justify-content-start">
+        <div class="row justify-content-start" v-if="$store.getters['userRole'] !== 1000 && $store.getters['customer/internalId']">
             <div class="col-auto">
                 <b-button @click="$store.dispatch('redirectToNetSuiteCustomerPage')" size="sm" variant="outline-success" class="mb-3">
                     <b-icon icon="arrow-left-circle"></b-icon> Go Back To Customer's Page
@@ -24,6 +24,10 @@
 
         <div class="row mt-4" v-if="!$store.getters['customer/internalId'] && !$store.getters['customer/busy']">
             <b-button block @click="saveNewCustomer" variant="success">Save</b-button>
+        </div>
+
+        <div v-if="$store.getters['testMode']">
+            {{$store.getters['customer/detailForm']}}
         </div>
 
         <GlobalNoticeModal />
