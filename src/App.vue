@@ -26,6 +26,14 @@
             <b-button block @click="saveNewCustomer" variant="success">Save</b-button>
         </div>
 
+        <div class="row justify-content-start my-3" v-if="$store.getters['userRole'] !== 1000 && $store.getters['customer/internalId']">
+            <div class="col-auto">
+                <b-button @click="$store.dispatch('redirectToNetSuiteCustomerPage')" size="sm" variant="outline-success" class="mb-3">
+                    <b-icon icon="arrow-left-circle"></b-icon> Go Back To Customer's Page
+                </b-button>
+            </div>
+        </div>
+
         <div v-if="$store.getters['testMode']">
             {{$store.getters['customer/detailForm']}}
         </div>
