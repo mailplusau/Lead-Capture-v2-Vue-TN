@@ -12,9 +12,9 @@ const adminRole = [3];
 
 // August 2023 rate according to https://mailplus.com.au/surcharge/
 const defaultValues = {
-    expressFuelSurcharge: 14.13, // custentity_mpex_surcharge_rate
-    standardFuelSurcharge: 6.6, // custentity_sendle_fuel_surcharge
-    serviceFuelSurcharge: 10.40, // custentity_service_fuel_surcharge_percen
+    expressFuelSurcharge: process.env.VUE_APP_NS_EXPRESS_FUEL_SURCHARGE, // custentity_mpex_surcharge_rate
+    standardFuelSurcharge: process.env.VUE_APP_NS_STANDARD_FUEL_SURCHARGE, // custentity_sendle_fuel_surcharge
+    serviceFuelSurcharge: process.env.VUE_APP_NS_SERVICE_FUEL_SURCHARGE, // custentity_service_fuel_surcharge_percen
 }
 
 const state = {
@@ -488,7 +488,10 @@ let actions = {
 
                     emailBody += 'A Hot Lead has been entered by franchisee ' + franchiseeRecord.getValue({fieldId: 'companyname'});
                     emailBody += 'Customer Name: ' + customerName + '<br>';
-                    emailBody += '<a href="' + customerLink + '" target="_blank">' + customerLink + '</a>'
+                    emailBody += '<a href="' + customerLink + '" target="_blank">' + customerLink + '</a><br><br>'
+
+                    emailBody += context.state.details.custentity_operation_notes ? 'Franchisee\'s note: ' : '';
+                    emailBody += context.state.details.custentity_operation_notes || '';
 
                     // Retrieve sales rep's email from backend. Client script can't access employee records.
                     let {data, error} = await axios.get(window.location.href, {
