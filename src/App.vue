@@ -1,154 +1,92 @@
 <template>
-    <div id="app" class="container">
-        <div class="row justify-content-start" v-if="$store.getters['userRole'] !== 1000 && $store.getters['customer/internalId']">
-            <div class="col-auto">
-                <b-button @click="$store.dispatch('redirectToNetSuiteCustomerPage')" size="sm" variant="outline-success" class="mb-3">
-                    <b-icon icon="arrow-left-circle"></b-icon> Go Back To Customer's Page
-                </b-button>
-            </div>
-        </div>
+    <v-app :style="{background: $vuetify.theme.themes[theme].background}">
+        <v-main>
+            <v-container fluid>
+                <v-row class="mx-1" justify="space-between" align="center">
+                    <v-col cols="auto">
+                        <h1 class="primary--text">
+                            {{ $store.getters['pageTitle'] }}
+                        </h1>
+                    </v-col>
 
-        <CustomerDetails ref="customerDetails"/>
+                    <v-col cols="auto">
+                        <a v-if="!$store.getters['user/isFranchisee']" @click="$store.dispatch('addShortcut')"
+                           class="subtitle-1">Add To Shortcuts <v-icon size="20" color="primary">mdi-open-in-new</v-icon></a>
+                    </v-col>
+                </v-row>
+            </v-container>
 
-        <AdditionalInformation />
+            <v-divider class="mb-3"></v-divider>
 
-        <div class="row justify-content-center align-items-stretch mt-3">
-            <CustomerAddresses />
+            <v-container>
+                <v-row justify="center">
+                    <v-col xl="9" lg="11" cols="12">
+                        <CustomerView ref="customerView" />
 
-            <CustomerContacts />
-        </div>
+                        <AddressView class="mb-10" />
 
-        <CustomerInvoices />
+                        <ContactView class="mb-10" />
 
-        <ExtraFeatures />
+                        <v-btn large block color="success" class="mb-10" elevation="7" v-if="!$store.getters['customer/id']"
+                               @click="saveNewCustomer">save new customer</v-btn>
 
-        <div class="row mt-4" v-if="!$store.getters['customer/internalId'] && !$store.getters['customer/busy']">
-            <b-button block @click="saveNewCustomer" variant="success">Save</b-button>
-        </div>
+                        <InvoiceView class="mb-10" />
 
-        <div class="row justify-content-start my-3" v-if="$store.getters['userRole'] !== 1000 && $store.getters['customer/internalId']">
-            <div class="col-auto">
-                <b-button @click="$store.dispatch('redirectToNetSuiteCustomerPage')" size="sm" variant="outline-success" class="mb-3">
-                    <b-icon icon="arrow-left-circle"></b-icon> Go Back To Customer's Page
-                </b-button>
-            </div>
-        </div>
+                        <ExtraInfo class="mb-10" />
+                    </v-col>
+                </v-row>
+            </v-container>
 
-        <div v-if="$store.getters['testMode']">
-            {{$store.getters['customer/detailForm']}}
-        </div>
+        </v-main>
 
-        <GlobalNoticeModal />
-    </div>
+        <GlobalNotificationModal />
+
+        <GlobalSpeedDial v-if="false" />
+
+        <v-btn v-if="$store.getters['customer/id']" title="Go to customer page"
+               color="pink" dark fixed bottom
+               left :fab="$vuetify.breakpoint.mdAndDown"
+               @click="$store.dispatch('customer/goToNetSuitePage')"
+        >
+            <v-icon>mdi-chevron-left</v-icon>
+            {{ $vuetify.breakpoint.mdAndDown ? '' : `Customer's Page` }}
+        </v-btn>
+    </v-app>
 </template>
 
 <script>
-import CustomerDetails from "./components/CustomerDetails";
-import CustomerAddresses from "./components/customer/addresses/Main";
-import CustomerContacts from "./components/customer/contacts/Main";
-import GlobalNoticeModal from "./components/GlobalNoticeModal";
-import AdditionalInformation from "./components/customer/AdditionalInformation";
-import CustomerInvoices from "./components/customer/Invoices";
-import ExtraFeatures from "./components/customer/extras/Main";
+import GlobalNotificationModal from "@/components/GlobalNotificationModal";
+import CustomerView from "@/views/customer/Main";
+import AddressView from "@/views/address/Main";
+import ContactView from "@/views/contact/Main";
+import InvoiceView from "@/views/invoices/Main";
+import ExtraInfo from "@/views/extra-info/Main";
+import GlobalSpeedDial from '@/components/GlobalSpeedDial';
 
 export default {
     name: 'App',
     components: {
-        CustomerInvoices,
-        AdditionalInformation, GlobalNoticeModal, CustomerContacts, CustomerAddresses, CustomerDetails, ExtraFeatures},
-    async beforeCreate() {
-        await this.$store.dispatch('init');
+        GlobalSpeedDial,
+        GlobalNotificationModal,
+        CustomerView,
+        AddressView,
+        ContactView,
+        InvoiceView,
+        ExtraInfo,
     },
-    mounted() {
-        this.registerCustomValidationRules();
+    beforeCreate() {
+        this.$store.dispatch('init');
     },
     methods: {
-        registerCustomValidationRules() {
-            this.$validator.extend('aus_phone', {
-                getMessage(field) {
-                    return `the ${field} field must be a valid Australian phone number.`;
-                },
-                validate(value) {
-                    let australiaPhoneFormat = /^(\+\d{2}[ -]{0,1}){0,1}(((\({0,1}[ -]{0,1})0{0,1}\){0,1}[2|3|7|8]{1}\){0,1}[ -]*(\d{4}[ -]{0,1}\d{4}))|(1[ -]{0,1}(300|800|900|902)[ -]{0,1}((\d{6})|(\d{3}[ -]{0,1}\d{3})))|(13[ -]{0,1}([\d -]{5})|((\({0,1}[ -]{0,1})0{0,1}\){0,1}4{1}[\d -]{8,10})))$/;
-                    return australiaPhoneFormat.test(value);
-                }
-            });
-            this.$validator.extend('aus_abn', {
-                getMessage(field) {
-                    return `the ${field} field must be a valid Australian ABN number.`;
-                },
-                validate(value) {
-
-                    if (!value || value.length !== 11) {
-                        return false;
-                    }
-                    let weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19],
-                        checksum = value.split('').map(Number).reduce(
-                            function(total, digit, index) {
-                                if (!index) {
-                                    digit--;
-                                }
-                                return total + (digit * weights[index]);
-                            },
-                            0
-                        );
-
-                    return !(!checksum || checksum % 89 !== 0);
-
-                }
-            });
-        },
-        async saveNewCustomer() {
-            if (await this.$refs.customerDetails.checkForm()) {
-                this.$store.dispatch('saveNewCustomer').then();
-            }
+        saveNewCustomer() {
+            if (this.$refs.customerView.triggerValidation())
+                this.$store.dispatch('saveNewCustomer');
+        }
+    },
+    computed:{
+        theme(){
+            return (this.$vuetify.theme.dark) ? 'dark' : 'light'
         }
     }
-}
+};
 </script>
-
-<style>
-#app {
-    font-family: Avenir, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-align: center;
-    color: #2c3e50;
-    margin-top: 0;
-}
-.custom-select {
-    position: relative;
-    flex: 1 1 auto;
-    width: 1%;
-    min-width: 0;
-    font-size: 13px;
-}
-.pac-container {
-    z-index: 1100 !important;
-}
-body.modal-open {
-    overflow: hidden !important;
-}
-
-.mp-header {
-    color: #387080;
-}
-.mp-text {
-    color: #103d39
-}
-
-/* Styles to give NetSuite the MailPlus color */
-div#body {
-    background-color: #cfe0ce !important;
-}
-ul#NS_MENU_ID0, ul#NS_MENU_ID0 > .ns-menuitem > a {
-    background-color: #cfe0ce !important;
-}
-
-ul.pagination.b-pagination, ul.nav.nav-tabs {
-    display: flex !important;
-    padding-left: 0 !important;
-    list-style: none !important;
-    margin: 0 !important;
-}
-</style>

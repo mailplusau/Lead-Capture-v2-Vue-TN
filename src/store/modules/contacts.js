@@ -1,268 +1,165 @@
-import getNSModules from '../../utils/ns-modules';
+import http from "@/utils/http";
+import {VARS} from "@/utils/utils.mjs";
 
 let localId = 1;
 
 const state = {
-    // For customer's contacts
-    contacts: [],
-    contactSelectedId: null,
-    contactModal: false,
-    contactModalTitle: 'Add New Contact',
-    contactFormBusy: false,
-    contactLoading: true,
-    contactForm: {
-        internalid: null,
-        salutation: '',
-        firstname: '',
-        lastname: '',
-        phone: '',
-        email: '',
-        contactrole: '',
-        title: '',
-        company: null, // internal id of customer record
-        entityid: '',
-        custentity_connect_admin: '',
-        custentity_connect_user: '',
+    idToDelete: null,
+    contacts: {
+        data: [],
+        busy: false,
     },
-
-    hasRoleWithPortalAdminAccess: false,
-}
+    dialog: {
+        title: '',
+        form: {},
+        busy: false,
+        open: false,
+    },
+    contact: {...VARS.contactFields},
+};
 
 const getters = {
     all : state => state.contacts,
-    modal : state => state.contactModal,
-    formBusy : state => state.contactFormBusy,
-    loading : state => state.contactLoading,
-    modalTitle : state => state.contactModalTitle,
-    form : state => state.contactForm,
-    hasRoleWithPortalAdminAccess : state => state.hasRoleWithPortalAdminAccess,
-}
+    dialog : state => state.dialog,
+    idToDelete : state => state.idToDelete,
+};
 
 const mutations = {
-    setModal : (state, open = true) => { state.contactModal = open; },
-}
+    setDialog : (state, open = true) => { state.dialog.open = open; },
+    setIdToDelete : (state, id = null) => { state.idToDelete = id; },
+    resetDialogForm : state => { state.dialog.form = {...state.contact}; }
+};
 
 const actions = {
     init : async context => {
-        let NS_MODULES = await getNSModules();
+        if (!context.rootGetters['customer/id'])
+            return await context.dispatch('restoreStateFromLocalStorage');
 
-        if (!context.rootGetters['customer/internalId']) {
-            context.state.contactLoading = false;
-            return;
+        await _fetchContacts(context);
+    },
+    openDialog : (context, {open = true, contactId = null}) => {
+        context.state.dialog.open = open;
+
+        if (open) {
+            let index = context.state.contacts.data.findIndex(item => item.internalid === contactId);
+            context.state.dialog.busy = true;
+            context.state.dialog.title = index >= 0 ? `Edit Contact Id #${contactId}` : 'Add Contact';
+
+            if (index >= 0) // Index exists, edit mode
+                context.state.dialog.form = {...context.state.contacts.data[index]};
+            else {
+                context.state.dialog.form = {...context.state.contact};
+                if (!context.state.contacts.data.length) // If there are no existing contact, set as Primary Contact (-10)
+                    context.state.dialog.form.contactrole = '-10';
+            }
+            
+            context.state.dialog.busy = false;
+        }
+    },
+    handleContactRoleChanged : context => {
+        if ([5, 6, 8].includes(parseInt(context.state.dialog.form.contactrole))) { // if role is Mail/Parcel Operator, MPEX contact or Product Contact
+            if (parseInt(context.state.dialog.form.custentity_connect_user) !== 1) // then set Portal User to Yes (1)
+                context.state.dialog.form.custentity_connect_user = 1;
+
+            // find at least 1 contact that is Portal Admin (1)
+            let index = context.state.contacts.data.findIndex(item => parseInt(item.custentity_connect_admin) === 1);
+
+            // and if there's no contact set as Portal Admin (1), set this to Yes as well
+            if (index < 0) context.state.dialog.form.custentity_connect_admin = 1;
+        }
+    },
+    save : async context => {
+        context.commit('displayBusyGlobalModal', {title: 'Processing', message: 'Saving contact. Please wait...'}, {root: true});
+
+        // Set default value
+        context.state.dialog.form.entityid = context.state.dialog.form.firstname + ' ' + context.state.dialog.form.lastname;
+        if (context.rootGetters['customer/id'])
+            context.state.dialog.form.company = context.rootGetters['customer/id'];
+
+        if (context.rootGetters['customer/id'])
+            await _saveContact.toNetSuite(context);
+        else await _saveContact.toLocal(context);
+
+        context.commit('closeGlobalModal', null, {root: true});
+    },
+    remove : async context => {
+        let contactInternalId = context.state.idToDelete;
+
+        if (!contactInternalId) return;
+
+        context.state.idToDelete = null;
+
+        context.commit('displayBusyGlobalModal', {title: 'Processing', message: 'Removing contact. Please wait...'}, {root: true});
+
+        if (context.rootGetters['customer/id']) {
+            await http.post('setContactAsInactive', { contactInternalId });
+
+            await _fetchContacts(context);
+        } else {
+            let index = context.state.contacts.data.findIndex(item => item.internalid === contactInternalId);
+            if (index >= 0) context.state.contacts.data.splice(index, 1);
         }
 
-        _loadContacts(context, NS_MODULES);
+        await context.dispatch('saveStateToLocalStorage');
 
-        _checkForAdminPortalRoles(context);
-
-        context.state.contactLoading = false;
-    },
-    openContactModal : (context, contactId) => {
-        context.state.contactModalTitle = 'Add a new contact';
-
-        if (contactId) {
-            context.state.contactModalTitle = 'Editing contact #' + contactId;
-
-            let index = context.state.contacts.findIndex(item => parseInt(item.internalid) === parseInt(contactId));
-
-            for (let fieldId in context.state.contactForm) {
-                context.state.contactForm[fieldId] = context.state.contacts[index][fieldId];
-            }
-        } else _resetContactForm(context);
-
-        if (!context.state.contacts.length) context.state.contactForm.contactrole = '-10'; // Primary Contact
-
-        context.state.contactModal = true;
-    },
-    closeContactModal : context => { context.state.contactModal = false; },
-    saveContactForm : context => {
-        context.state.contactFormBusy = true;
-
-        setTimeout(async () => {
-            let NS_MODULES = await getNSModules();
-            context.state.contactForm.entityid = context.state.contactForm.firstname + ' ' + context.state.contactForm.lastname;
-
-            if (context.rootGetters['customer/internalId']) {
-                context.state.contactForm.company = context.rootGetters['customer/internalId'];
-
-                _saveContactToNetSuite(NS_MODULES, context.state.contactForm);
-            } else {
-
-                context.state.contactForm.email = context.state.contactForm.email || 'abc@abc.com';
-
-                if (context.state.contactForm.internalid) { // we still have local id for these contacts to make it easy to edit them
-                    let index = context.state.contacts.findIndex(item => item.internalid === context.state.contactForm.internalid);
-                    context.state.contacts.splice(index, 1, {
-                        ...context.state.contactForm,
-                        internalid: context.state.contactForm.internalid
-                    })
-                } else {
-                    context.state.contacts.push({
-                        ...context.state.contactForm,
-                        internalid: localId
-                    });
-
-                    localId++;
-                }
-
-            }
-
-            _loadContacts(context, NS_MODULES);
-
-            _checkForAdminPortalRoles(context);
-
-            context.state.contactFormBusy = false;
-
-            context.state.contactModal = false;
-        }, 250);
-    },
-    deleteContact : (context, internalId) => {
-        context.state.contactFormBusy = true;
-
-        return new Promise(resolve => {
-            setTimeout(async () => {
-                if (context.rootGetters['customer/internalId']) {
-                    let NS_MODULES = await getNSModules();
-
-                    _setContactAsInactive(NS_MODULES, internalId);
-
-                    _loadContacts(context, NS_MODULES);
-                } else {
-                    let index = context.state.contacts.findIndex(item => item.internalid === internalId);
-
-                    if (index >= 0) context.state.contacts.splice(index, 1);
-                }
-
-                _checkForAdminPortalRoles(context);
-
-                context.state.contactFormBusy = false;
-
-                resolve();
-            }, 200)
-        })
+        context.commit('displayInfoGlobalModal', {title: 'Complete', message: 'Contact has been deleted.'}, {root: true});
     },
 
-    saveContactsToNewCustomer : async (context, newCustomerId) => {
-        console.log('saving contracts for ', newCustomerId);
-        console.log(context.state.contacts);
+    saveStateToLocalStorage : async context => {
+        top.localStorage.setItem("1763_contacts", JSON.stringify(context.state.contacts.data));
+    },
+    clearStateFromLocalStorage : async () => {
+        top.localStorage.removeItem("1763_contacts");
+    },
+    restoreStateFromLocalStorage : async context => {
+        if (context.rootGetters['customer/id'] !== null) return;
 
-        let NS_MODULES = await getNSModules();
-
-        for (let contact of context.state.contacts) {
-            _saveContactToNetSuite(NS_MODULES, {...contact, internalid: null, company: newCustomerId});
+        try {
+            let data = JSON.parse(top.localStorage.getItem("1763_contacts"));
+            if (Array.isArray(data)) context.state.contacts.data = [...data];
+        } catch (e) {
+            console.log('No stored data found')
         }
-        console.log('saving contracts done');
     }
-}
+};
 
-/** -- Fields in customsearch_salesp_contacts saved search --
-Internal ID internalid
-Customer Internal ID internalid
-Customer Name companyname
-Mr./Mrs... salutation
-First Name firstname
-Last Name lastname
-Name entityid
-Phone phone
-Email email
-Job Title title
-Role contactrole
-Formula (Text) formulatext
-Portal Admin custentity_connect_admin
-Portal User custentity_connect_user
-MPEX Contact custentity_mpex_contact
- **/
-function _loadContacts(context, NS_MODULES) {
-    if (!context.rootGetters['customer/internalId']) return;
+mutations.resetDialogForm(state);
 
-    let contactSearch = NS_MODULES.search.load({
-        id: 'customsearch_salesp_contacts',
-        type: 'contact'
+async function _fetchContacts(context) {
+    if (!context.rootGetters['customer/id']) return;
+
+    context.state.contacts.busy = true;
+    let data = await http.get('getCustomerContacts', {
+        customerId: context.rootGetters['customer/id']
     });
 
-    contactSearch.filters.push(NS_MODULES.search.createFilter({
-        name: 'internalid',
-        join: 'CUSTOMER',
-        operator: NS_MODULES.search.Operator.ANYOF,
-        values: context.rootGetters['customer/internalId']
-    }));
-
-    contactSearch.filters.push(NS_MODULES.search.createFilter({
-        name: 'isinactive',
-        operator: NS_MODULES.search.Operator.IS,
-        values: false
-    }));
-
-    let result = contactSearch.run();
-
-    context.state.contacts.splice(0);
-
-    result.each((item) => {
-        let contactEntry = [];
-
-        for (let fieldId in context.state.contactForm) {
-            contactEntry[fieldId] = item.getValue({ name: fieldId });
-        }
-
-        context.state.contacts.push(contactEntry);
-
-        return true;
-    })
+    context.state.contacts.data = [...data];
+    context.state.contacts.busy = false;
 }
 
-function _saveContactToNetSuite(NS_MODULES, contactData) {
-    if (!contactData.company) return; // company is the current customer's internal id
+const _saveContact = {
+    async toNetSuite(context) {
+        let contactData = {};
 
-    let contactRecord;
+        for (let field in context.state.contact)
+            contactData[field] = context.state.dialog.form[field];
 
-    if (contactData.internalid) {
-        contactRecord = NS_MODULES.record.load({
-            type: NS_MODULES.record.Type.CONTACT,
-            id: contactData.internalid,
-            isDynamic: true
-        });
-    } else {
-        contactRecord = NS_MODULES.record.create({
-            type: NS_MODULES.record.Type.CONTACT,
-        });
+        await http.post('saveContact', {contactData});
+
+        await _fetchContacts(context);
+    },
+    async toLocal(context) {
+        context.state.dialog.form.email = context.state.dialog.form.email || 'abc@abc.com';
+
+        if (context.state.dialog.form.internalid !== null && context.state.dialog.form.internalid >= 0) {
+            let currentIndex = context.state.contacts.data.findIndex(item => item.internalid === context.state.dialog.form.internalid);
+            context.state.contacts.data.splice(currentIndex, 1, {...context.state.dialog.form});
+        } else context.state.contacts.data.push({...context.state.dialog.form, internalid: localId++});
+
+        context.commit('resetDialogForm');
+
+        await context.dispatch('saveStateToLocalStorage');
     }
-
-    for (let fieldId in contactData) {
-        contactRecord.setValue({fieldId, value: contactData[fieldId]});
-    }
-
-    contactRecord.save({ignoreMandatoryFields: true});
-}
-
-function _setContactAsInactive(NS_MODULES, contactInternalId) {
-    let contactRecord = NS_MODULES.record.load({
-        type: NS_MODULES.record.Type.CONTACT,
-        id: contactInternalId,
-    });
-
-    contactRecord.setValue({fieldId: 'isinactive', value: true});
-
-    contactRecord.save({ignoreMandatoryFields: true});
-}
-
-function _checkForAdminPortalRoles(context) {
-    context.state.hasRoleWithPortalAdminAccess = false;
-
-    for (let contact of context.state.contacts) {
-        if (parseInt(contact.custentity_connect_admin) === 1) {
-            context.state.hasRoleWithPortalAdminAccess = true;
-            break;
-        }
-    }
-}
-
-function _resetContactForm(context) {
-    for (let fieldId in context.state.contactForm) {
-        context.state.contactForm[fieldId] = '';
-    }
-
-    context.state.contactForm.company = context.rootGetters['customer/internalId'] || null;
-    context.state.contactForm.internalid = null;
 }
 
 export default {

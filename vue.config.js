@@ -3,6 +3,20 @@ const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin
 const packageJson = require('./package.json')
 
 module.exports = {
+  chainWebpack(config) {
+    const fontsRule = config.module.rule('fonts')
+    fontsRule.uses.clear()
+    config.module
+        .rule('fonts')
+        .test(/\.(ttf|otf|eot|woff|woff2)$/)
+        .use('base64-inline-loader')
+        .loader('base64-inline-loader')
+        .tap((options) => {
+          // modify the options...
+          return options
+        })
+        .end()
+  },
   lintOnSave: false,
   css: {
     extract: false,
@@ -19,5 +33,8 @@ module.exports = {
       }),
       new HtmlWebpackInlineSourcePlugin(HtmlWebpackPlugin)
     ]
-  }
+  },
+  transpileDependencies: [
+    'vuetify'
+  ]
 }

@@ -17,6 +17,34 @@ define(moduleNames.map(item => 'N/' + item), (...args) => {
 
         function pageInit() {
             console.log('Client script init.');
+            document.querySelector('h1.uir-record-type').innerHTML = 'Loading page. Please wait...';
+
+            let baseUrl = getCurrentNetSuiteUrl().split('?')[0];
+            const params = new Proxy(new URLSearchParams(window.location.search), {
+                get: (searchParams, prop) => searchParams.get(prop),
+            });
+
+            const paramsBuilder = new URLSearchParams({
+                script: params['script'], deploy: params['deploy'],
+                requestData: JSON.stringify({operation: 'getIframeContents'}),
+            });
+
+            fetch(baseUrl + '?' + paramsBuilder.toString(), {
+                method: 'get'
+            })
+                .then(res => res.json())
+                .then(jsonData => {
+                    let iframe = document.createElement('iframe');
+                    iframe.id = 'body';
+                    iframe.srcdoc = jsonData;
+                    iframe.style.setProperty('border', 'none');
+                    document.querySelector('div#body').parentNode.insertBefore(iframe, null);
+                    document.querySelector('div#body').remove();
+                    setMPTheme();
+                })
+                .catch(err => {
+                    console.log(err);
+                });
         }
 
         return { pageInit };
@@ -26,4 +54,12 @@ define(moduleNames.map(item => 'N/' + item), (...args) => {
 // eslint-disable-next-line no-unused-vars
 function _getClientModules() {
     return modules;
+}
+
+function setMPTheme(pageTitle = '') {
+    if (pageTitle) document.title = pageTitle;
+}
+
+function getCurrentNetSuiteUrl() {
+    return location.href
 }
