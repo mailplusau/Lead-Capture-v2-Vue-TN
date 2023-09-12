@@ -875,8 +875,8 @@ function _sendEmailToSalesRep(customerId) {
     let franchiseesNote = customerRecord.getValue({fieldId: 'custentity_operation_notes'});
     let customerStatus = parseInt(customerRecord.getValue({fieldId: 'entitystatus'}));
 
-    // if current user's role is Franchisee (1000) and this new customer's status is Suspect - Hot Lead  (57)
-    if (parseInt(NS_MODULES.runtime['getCurrentUser']().role) === 1000 && customerStatus === 57) {
+    // if current user's role is Franchisee (1000)
+    if (parseInt(NS_MODULES.runtime['getCurrentUser']().role) === 1000) {
         let franchiseeRecord = record.load({type: 'partner', id: customerRecord.getValue({fieldId: 'partner'})});
         let employeeRecord = record.load({type: 'employee', id: customerRecord.getValue({fieldId: 'custentity_mp_toll_salesrep'})});
 
@@ -889,15 +889,21 @@ function _sendEmailToSalesRep(customerId) {
         emailBody += '<a href="' + customerLink + '" target="_blank">' + customerLink + '</a><br><br>'
         emailBody += franchiseesNote ? `Franchisee's note: ${franchiseesNote}<br>` : '';
 
-        NS_MODULES.email.send({
-            author: 112209,
-            subject: 'Sales HOT Lead - Zee Generated -' + customerName,
-            body: emailBody,
-            recipients: [employeeRecord.getValue({fieldId: 'email'})],
-            cc: ['luke.forbes@mailplus.com.au'],
-            relatedRecords: {
-                entityId: customerId
-            }
-        });
+        if ([57, 6].includes(customerStatus)) { // Suspect - New (6) or Suspect - Hot Lead (57)
+            // Change the recipient based on the status
+            let subject = `Sales ${customerStatus === 57 ? 'HOT' : 'NEW'} Lead - Zee Generated - ${customerName}`;
+            let recipients = customerStatus === 57 ? [employeeRecord.getValue({fieldId: 'email'})] : ['matthew.rajabi@mailplus.com.au'];
+
+            NS_MODULES.email.send({
+                author: 112209,
+                subject,
+                body: emailBody,
+                recipients,
+                cc: ['luke.forbes@mailplus.com.au'],
+                relatedRecords: {
+                    entityId: customerId
+                }
+            });
+        }
     }
 }
