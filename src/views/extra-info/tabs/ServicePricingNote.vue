@@ -109,8 +109,8 @@ export default {
             }
             params = JSON.stringify(params);
 
-            let upload_url = baseURL + window.nlapiResolveURL('SUITELET', 'customscript_sl_smc_main', 'customdeploy_sl_smc_main') + '&unlayered=T&custparam_params=' + params;
-            window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+            let upload_url = baseURL + top.nlapiResolveURL('SUITELET', 'customscript_sl_smc_main', 'customdeploy_sl_smc_main') + '&unlayered=T&custparam_params=' + params;
+            top.open(upload_url, "_blank");
         },
     },
     computed: {

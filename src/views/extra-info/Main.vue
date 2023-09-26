@@ -8,15 +8,16 @@
                         slider-color="yellow"
                         fixed-tabs
                         dark color="red"
+                        active-class="yellow--text"
                 >
                     <v-tabs-slider></v-tabs-slider>
 
-                    <v-tab href="#tab-1" class="caption yellow--text">
+                    <v-tab href="#tab-1" class="caption">
                         Additional Information
                     </v-tab>
 
                     <v-tab href="#tab-2" class="caption">
-                        Services & Pricing Note
+                        Services & Pricing
                     </v-tab>
 
                     <v-tab href="#tab-3" class="caption">
