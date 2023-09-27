@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="dialogOpen" width="50vw" :persistent="formBusy" eager>
+    <v-dialog v-model="dialogOpen" :width="dialogWidth" :persistent="formBusy" eager>
         <template v-slot:activator="{ on, attrs }">
             <v-btn color="success" small :disabled="addressesLoading"
                    v-bind="attrs" v-on="on">
@@ -93,21 +93,27 @@
                             ></v-text-field>
                         </v-col>
 
-                        <v-col cols="4">
+                        <v-col cols="3">
                             <v-checkbox v-model="form.defaultshipping"
                                         label="Default Shipping"
                             ></v-checkbox>
                         </v-col>
 
-                        <v-col cols="4">
+                        <v-col cols="3">
                             <v-checkbox v-model="form.defaultbilling"
                                         label="Default Billing"
                             ></v-checkbox>
                         </v-col>
 
-                        <v-col cols="4">
+                        <v-col cols="3">
                             <v-checkbox v-model="form.isresidential"
                                         label="Postal Address"
+                            ></v-checkbox>
+                        </v-col>
+
+                        <v-col cols="3">
+                            <v-checkbox v-model="form.isOldAddress"
+                                        label="Is Old Address"
                             ></v-checkbox>
                         </v-col>
                     </v-row>
@@ -229,6 +235,16 @@ export default {
                 !!this.form.state ||
                 !!this.form.city || 'Please fill in this field using one of the address suggestions';
         },
+        dialogWidth() {
+            if (this.$vuetify.breakpoint.smAndDown)
+                return '95vw';
+            else if (this.$vuetify.breakpoint.md)
+                return '75vw';
+            else if (this.$vuetify.breakpoint.lg)
+                return '60vw';
+            else
+                return '40vw';
+        }
     },
     watch: {
         dialogOpen(val) {

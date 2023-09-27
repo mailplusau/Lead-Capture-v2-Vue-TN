@@ -1,11 +1,5 @@
 import Vue from 'vue';
 
-const fuelSurcharge = {
-    express: process.env.VUE_APP_NS_EXPRESS_FUEL_SURCHARGE, // custentity_mpex_surcharge_rate
-    standard: process.env.VUE_APP_NS_STANDARD_FUEL_SURCHARGE, // custentity_sendle_fuel_surcharge
-    service: process.env.VUE_APP_NS_SERVICE_FUEL_SURCHARGE, // custentity_service_fuel_surcharge_percen
-}
-
 export const baseURL = 'https://' + process.env.VUE_APP_NS_REALM + '.app.netsuite.com';
 
 export const VARS = {
@@ -27,14 +21,6 @@ export const VARS = {
             custentity_new_customer: '',
 
             custentity_mp_toll_salesrep: '', // Account Manager ID
-
-            custentity_service_fuel_surcharge: 1, // 1: yes, 2: no, 3: not included
-            custentity_service_fuel_surcharge_percen: fuelSurcharge.service, // Service fuel surcharge according to https://mailplus.com.au/surcharge/
-
-            custentity_mpex_surcharge: 1,  // 1: yes, 2: no
-            custentity_mpex_surcharge_rate: fuelSurcharge.express, // Express fuel surcharge according to https://mailplus.com.au/surcharge/
-
-            custentity_sendle_fuel_surcharge: fuelSurcharge.standard, // Standard fuel surcharge according to https://mailplus.com.au/surcharge/
 
             custentity_maap_bankacctno: null,
             custentity_maap_bankacctno_parent: null,
@@ -106,7 +92,6 @@ export const VARS = {
         custentity_connect_admin: 2,
         custentity_connect_user: 2,
     },
-    fuelSurcharge,
 }
 
 export const rules = {

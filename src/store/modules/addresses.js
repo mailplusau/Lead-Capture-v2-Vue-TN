@@ -2,6 +2,7 @@ import http from "@/utils/http";
 import {setObjectInArray, setObjectValueInArray, VARS} from '@/utils/utils.mjs';
 
 let localId = 1;
+const oldAddressLabel = 'Old Address';
 
 const state = {
     idToDelete: null,
@@ -15,7 +16,7 @@ const state = {
         busy: false,
         open: false,
     },
-    address: {...VARS.addressFields},
+    address: {...VARS.addressFields, isOldAddress: false,},
     addressSublist: {...VARS.addressSublistFields},
     postalState: 0,
     postalLocations: {
@@ -151,7 +152,9 @@ const actions = {
         _setLocalAddressLabel(context.state.dialog.form);
 
         if (context.rootGetters['customer/id']) { // save addresses to NetSuite
-            let addressArray = [{...context.state.dialog.form}];
+            // eslint-disable-next-line no-unused-vars
+            let {isOldAddress, ...addressData} = context.state.dialog.form;
+            let addressArray = [{...addressData}];
             if (currentBillingAddressIndex >= 0) addressArray.push({...context.state.addresses.data[currentBillingAddressIndex]});
             if (currentShippingAddressIndex >= 0) addressArray.push({...context.state.addresses.data[currentShippingAddressIndex]});
 
@@ -230,12 +233,20 @@ async function _fetchAddresses(context) {
         customerId: context.rootGetters['customer/id']
     });
 
-    context.state.addresses.data = [...data];
+    context.state.addresses.data.splice(0);
+    data.forEach(item => {
+        context.state.addresses.data.push({
+            ...item,
+            isOldAddress: item.label === oldAddressLabel
+        })
+    })
     context.state.addresses.busy = false;
 }
 
 function _setLocalAddressLabel(addressObject) {
-    if (addressObject.defaultshipping) {
+    if (addressObject.isOldAddress) {
+        addressObject.label = oldAddressLabel;
+    } else if (addressObject.defaultshipping) {
         addressObject.label = 'Site Address';
     } else if (addressObject.defaultbilling) {
         addressObject.label = 'Billing Address';
