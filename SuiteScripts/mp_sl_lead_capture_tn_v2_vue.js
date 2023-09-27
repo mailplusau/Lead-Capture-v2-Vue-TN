@@ -8,6 +8,13 @@
  * @created 27/02/2023
  */
 
+// Surcharge rates according to https://mailplus.com.au/surcharge/
+const fuelSurcharge = {
+    express: process.env.VUE_APP_NS_EXPRESS_FUEL_SURCHARGE, // custentity_mpex_surcharge_rate
+    standard: process.env.VUE_APP_NS_STANDARD_FUEL_SURCHARGE, // custentity_sendle_fuel_surcharge
+    service: process.env.VUE_APP_NS_SERVICE_FUEL_SURCHARGE, // custentity_service_fuel_surcharge_percen
+}
+
 import {VARS} from '@/utils/utils.mjs';
 
 // This should be the same file as the one built by webpack. Make sure this matches the filename in package.json
@@ -664,8 +671,17 @@ const sharedFunctions = {
         let customerRecord;
         let isoStringRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 
-        if (id) customerRecord = record.load({ type: record.Type.CUSTOMER, id, isDynamic: true});
-        else customerRecord = record.create({type: record.Type.LEAD}); // id not present, this is a new lead
+        if (id) customerRecord = record.load({type: record.Type.CUSTOMER, id, isDynamic: true});
+        else { // id not present, this is a new lead
+            customerRecord = record.create({type: record.Type.LEAD});
+
+            // Set default fuel surcharges
+            customerRecord.setValue({fieldId: 'custentity_service_fuel_surcharge', value: 1}); // 1: yes, 2: no, 3: not included
+            customerRecord.setValue({fieldId: 'custentity_mpex_surcharge', value: 1}); // 1: yes, 2: no
+            customerRecord.setValue({fieldId: 'custentity_service_fuel_surcharge_percen', value: fuelSurcharge.service});
+            customerRecord.setValue({fieldId: 'custentity_mpex_surcharge_rate', value: fuelSurcharge.express});
+            customerRecord.setValue({fieldId: 'custentity_sendle_fuel_surcharge', value: fuelSurcharge.standard});
+        }
 
         for (let fieldId in data)
             customerRecord.setValue({fieldId, value: isoStringRegex.test(data[fieldId]) ? new Date(data[fieldId]) : data[fieldId]});
