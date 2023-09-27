@@ -28,6 +28,10 @@
                                     <v-toolbar-title class="subtitle-1">Services</v-toolbar-title>
                                 </v-toolbar>
                             </template>
+
+                            <template v-slot:item.price="{ item }">
+                                {{ formatCurrency(item.custrecord_service_price) }}
+                            </template>
                         </v-data-table>
                     </v-col>
 
@@ -40,6 +44,10 @@
                                 <v-toolbar flat dense color="background darken-3" dark>
                                     <v-toolbar-title class="subtitle-1">Item pricing</v-toolbar-title>
                                 </v-toolbar>
+                            </template>
+
+                            <template v-slot:item.price="{ item }">
+                                {{ formatCurrency(item.price) }}
                             </template>
                         </v-data-table>
                     </v-col>
@@ -58,6 +66,11 @@
 <script>
 import {allowOnlyNumericalInput, rules, baseURL} from '@/utils/utils.mjs';
 
+let AUDollar = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'AUD',
+});
+
 export default {
     name: "ServicePricingNote",
     data: () => ({
@@ -66,7 +79,7 @@ export default {
         serviceColumns: [
             {value: 'custrecord_service_text', text: 'Name', sortable: false, align: 'center'},
             {value: 'custrecord_service_description', text: 'Description', sortable: false, align: 'center'},
-            {value: 'custrecord_service_price', text: 'Price', sortable: false, align: 'center'},
+            {value: 'price', text: 'Price', sortable: false, align: 'center'},
         ],
         itemPricingColumns: [
             {value: 'name', text: 'Item Name', sortable: false, align: 'center'},
@@ -101,6 +114,9 @@ export default {
             console.log('Form validated, let\'s go');
             this.formDisabled = true;
             this.$store.dispatch('extra-info/saveAdditionalInfo');
+        },
+        formatCurrency(value) {
+            return AUDollar.format(value);
         },
         goToServiceAndPricingPage() {
             let params = {
