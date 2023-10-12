@@ -47,6 +47,7 @@ const state = {
         // {value: 690145, text: 'David Gdanski'},
         {value: 668712, text: 'Belinda Urbani'},
     ],
+    carrierList: []
 };
 
 const getters = {
@@ -56,6 +57,7 @@ const getters = {
     roles : state => state.roles,
     statuses : state => state.statuses,
     states : state => state.states,
+    carrierList : state => state.carrierList,
 
     invoiceMethods : state => state.invoiceMethods,
     invoiceCycles : state => state.invoiceCycles,
@@ -75,7 +77,7 @@ const mutations = {};
 
 const actions = {
     init : async context => {
-        let alwaysLoad = ['getIndustries', 'getLeadSources', 'getFranchisees', 'getRoles'];
+        let alwaysLoad = ['getIndustries', 'getLeadSources', 'getFranchisees', 'getRoles', 'getCarrierList'];
         let conditionalLoad = [
             'getInvoiceMethods',
             'getInvoiceCycles',
@@ -145,6 +147,10 @@ const actions = {
     getClassifyLeadOptions : async context => {
         await _fetchDataForHtmlSelect(context, context.state.classifyLeadOptions,
             null, 'customlist_classify_lead', 'internalId', 'name');
+    },
+    getCarrierList : async context => {
+        await _fetchDataForHtmlSelect(context, context.state.carrierList,
+            null, 'customlist_carrier', 'internalId', 'name');
     },
 };
 

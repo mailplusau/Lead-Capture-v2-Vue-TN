@@ -16,6 +16,7 @@ const getters = {
     salesRep : state => state.salesRep,
 
     isFranchisee : state => state.role === 1000,
+    isDataAdmin : state => state.role === 1032,
 };
 
 const mutations = {};
@@ -34,7 +35,7 @@ const actions = {
 };
 
 function _hydrateTestData(context) {
-    context.state.role = 1000;
+    context.state.role = 3;
     context.state.id = 779884;
     context.state.salesRep.id = 1732844;
     context.state.salesRep.name = 'Tim Nguyen';

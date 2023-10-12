@@ -10,7 +10,7 @@
                     <v-text-field dense label="Internal ID" :value="form.entityid" disabled></v-text-field>
                 </v-col>
 
-                <v-col v-if="!franchiseeMode" :cols="8">
+                <v-col v-if="dataAdminMode" cols="8">
                     <v-text-field dense v-if="franchiseeMode" label="Account Manager"
                                   :value="$store.getters['user/salesRep'].name" disabled></v-text-field>
                     <v-autocomplete dense v-else label="Account Manager" :disabled="franchiseeMode || formDisabled || formBusy"
@@ -57,7 +57,20 @@
                     ></v-text-field>
                 </v-col>
 
-                <v-col cols="6" v-if="!franchiseeMode">
+                <v-col cols="6">
+                    <v-text-field dense label="Website" v-model="form.custentity_website_page_url"
+                                  placeholder="https://"
+                    ></v-text-field>
+                </v-col>
+
+                <v-col cols="6">
+                    <v-autocomplete dense multiple label="Previous Carrier" :disabled="formDisabled || formBusy"
+                                    v-model="form.custentity_previous_carrier"
+                                    :items="$store.getters['misc/carrierList']"
+                    ></v-autocomplete>
+                </v-col>
+
+                <v-col cols="6" v-if="dataAdminMode">
                     <v-autocomplete dense label="Franchisee" :disabled="franchiseeMode || formDisabled || formBusy"
                                     v-model="form.partner"
                                     :items="$store.getters['misc/franchisees']"
@@ -99,7 +112,7 @@
                     ></v-autocomplete>
                 </v-col>
 
-                <v-col cols="6" v-if="!franchiseeMode">
+                <v-col :cols="dataAdminMode || franchiseeMode ? 6 : 12" v-if="!franchiseeMode">
                     <v-autocomplete dense label="Status"
                                     v-model="form.entitystatus"
                                     :items="$store.getters['misc/statuses']"
@@ -203,6 +216,9 @@ export default {
         },
         franchiseeMode() {
             return this.$store.getters['user/isFranchisee'];
+        },
+        dataAdminMode() {
+            return this.$store.getters['user/isDataAdmin']
         },
         form() {
             return this.$store.getters['customer/form'].data;

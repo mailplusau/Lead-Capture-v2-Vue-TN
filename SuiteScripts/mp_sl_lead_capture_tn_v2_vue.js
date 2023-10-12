@@ -16,6 +16,7 @@ const fuelSurcharge = {
 }
 
 import {VARS} from '@/utils/utils.mjs';
+import {baseURL} from '@/utils/utils.mjs';
 
 // This should be the same file as the one built by webpack. Make sure this matches the filename in package.json
 let htmlTemplateFile = 'mp_cl_lead_capture_tn_v2_vue.html';
@@ -584,6 +585,7 @@ const postOperations = {
 
         customerData['custentity_email_service'] = customerData['custentity_email_service'] || 'abc@abc.com';
         customerData['phone'] = customerData['phone'] || '1300656595';
+        customerData['partner'] = customerData['partner'] || 435; // MailPlus Pty Ltd (435)
 
         customerData['custentity_invoice_method'] = 2; // Invoice method: Email (2) (default)
         customerData['custentity18'] = true; // Exclude from batch printing
@@ -606,7 +608,7 @@ const postOperations = {
         let address = addressArray[addressIndex];
         if (address) _createProductPricing(customerId, address.city, address.zip);
 
-        _sendEmailToSalesRep(customerId);
+        // _sendEmailToSalesRep(customerId);
 
         _writeResponseJson(response, customerId);
     },

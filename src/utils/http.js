@@ -24,7 +24,7 @@ function _getURL(options) {
 export default {
     /**
      * @param {string} operation - The name of the method to call
-     * @param {Object} requestParams - An object containing parameters for the method
+     * @param {Object} [requestParams] - An object containing parameters for the method
      * @param {Object} [options={}] - An object containing various options.
      * @param {string} [options.script] - The NetSuite ID of the script record.
      * @param {string} [options.deploy] - The NetSuite ID of the deployment record.
@@ -42,7 +42,7 @@ export default {
     },
     /**
      * @param {string} operation - The name of the method to call
-     * @param {Object} requestParams - An object containing parameters for the method
+     * @param {Object} [requestParams] - An object containing parameters for the method
      * @param {Object} [options={}] - An object containing various options.
      * @param {string} [options.script] - The NetSuite ID of the script record.
      * @param {string} [options.deploy] - The NetSuite ID of the deployment record.
@@ -58,7 +58,21 @@ export default {
                 .send({operation, requestParams})
                 .end((err, res) => { _handle(err, res, reject, resolve, options?.noErrorPopup); });
         });
-    }
+    },
+    /**
+     * @param {string} url - The url of the endpoint
+     * @param {Object} [params] - The search queries for this GET call
+     * @param {Object} [options={}] - An object containing various options.
+     * @param {boolean} [options.noErrorPopup] - A flag that stops error from being displayed in a popup.
+     */
+    async rawGet(url, params, options) {
+        return new Promise((resolve, reject) => {
+            superagent.get(url)
+                .set("Content-Type", "application/json")
+                .query(params)
+                .end((err, res) => { _handle(err, res, reject, resolve, options?.noErrorPopup); });
+        });
+    },
 }
 
 /**

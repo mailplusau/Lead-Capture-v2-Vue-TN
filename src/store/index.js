@@ -141,6 +141,13 @@ const actions = {
         await context.dispatch('addresses/clearStateFromLocalStorage');
         await context.dispatch('contacts/clearStateFromLocalStorage');
 
+        await http.rawGet(baseURL + '/app/site/hosting/scriptlet.nl', {
+            script: 1789,
+            deploy: 1,
+            custid: customerId,
+            role: context.getters['user/role'],
+        }, {noErrorPopup: true})
+
         top.location.href = baseURL + '/app/common/entity/custjob.nl?id=' + customerId;
     },
     uploadImages : async (context, customerId) => {

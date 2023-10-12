@@ -8,14 +8,16 @@ export const VARS = {
             entityid: null,
             companyname: '',
             vatregnumber: '', // ABN
+            custentity_website_page_url: '', // Website
+            custentity_previous_carrier: '', // Previous carrier
             email: '', // Account (main) email
             altphone: '', // Account (main) phone
             custentity_email_service: '', // Day-to-day email
             phone: '', // Day-to-day phone
-            custentity_industry_category: '', // Industry
+            custentity_industry_category: '19', // Industry, defaulted to Other Services (19)
             leadsource: '',
             partner: '', // Associated franchisee
-            entitystatus: '', // Customer status
+            entitystatus: 6, // Customer status, defaulted to SUSPECT - New (6)
             custentity_old_zee: '', // Old franchisee (use for Change of Entity or Relocation stats)
             custentity_old_customer: '', // Former internal id (use for Change of Entity or Relocation stats)
             custentity_new_zee: '',
@@ -33,9 +35,6 @@ export const VARS = {
             custentity18: true, // EXCLUDE FROM BATCH PRINTING
 
             custentity_operation_notes: '',
-
-            custentity_brochure_handed_over: 2, // Brochure Handed Over | 1. Yes | 2. No
-            custentity_expecting_call: 2, // Expecting a Call
         },
         extraInfoFields: {
             custentity_invoice_method: null, // Invoice method
