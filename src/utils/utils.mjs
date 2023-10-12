@@ -5,6 +5,7 @@ export const baseURL = 'https://' + process.env.VUE_APP_NS_REALM + '.app.netsuit
 export const VARS = {
     customer: {
         basicFields: {
+            entityid: null,
             companyname: '',
             vatregnumber: '', // ABN
             email: '', // Account (main) email
@@ -141,6 +142,55 @@ export const rules = {
 
         return true
     }
+}
+
+export function readFileAsBase64(fileObject) {
+    return new Promise((resolve, reject) => {
+        if (!fileObject) resolve(null);
+
+        let reader = new FileReader();
+
+        reader.onload = (event) => {
+            try {
+                resolve(event.target.result.split(',')[1]);
+            } catch (e) {reject(e);}
+        }
+        reader.readAsDataURL(fileObject);
+    });
+}
+
+export function getImageDimension(fileObject) {
+    return new Promise((resolve, reject) => {
+        let _URL = window.URL || window.webkitURL;
+        let img = new Image();
+        let objectUrl = _URL.createObjectURL(fileObject);
+        img.onload = function () {
+            resolve({width: this.width, height: this.height})
+            _URL.revokeObjectURL(objectUrl);
+        };
+        img.onerror = e => { reject(e); }
+        img.src = objectUrl;
+    })
+}
+
+export function convertImageToPngBase64(fileObject) {
+    return new Promise((resolve, reject) => {
+        let _URL = window.URL || window.webkitURL;
+        let img = new Image();
+        let objectUrl = _URL.createObjectURL(fileObject);
+        img.onload = function () {
+            let canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext("2d").drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpg', 1));
+            canvas.remove();
+            img.remove();
+            _URL.revokeObjectURL(objectUrl);
+        };
+        img.onerror = e => { reject(e); }
+        img.src = objectUrl;
+    })
 }
 
 export function setObjectValueInArray(array, index, key, value) {

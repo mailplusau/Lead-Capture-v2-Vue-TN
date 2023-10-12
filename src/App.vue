@@ -21,14 +21,24 @@
             <v-container>
                 <v-row justify="center">
                     <v-col xl="9" lg="11" cols="12">
-                        <CustomerView ref="customerView" />
+                        <CustomerView ref="customerView" :class="$store.getters['user/isFranchisee'] ? '' : 'mb-10'" />
 
-                        <AddressView class="mb-10" />
+                        <AddressForm v-if="$store.getters['user/isFranchisee']" class="mb-10" inline-form ref="addressForm" />
+
+                        <AddressView v-else class="mb-10" />
 
                         <ContactView class="mb-10" />
 
+                        <FileDropZone class="mb-10" v-if="!$store.getters['customer/id']" v-model="$store.getters['imageUploader'].data" />
+
+                        <v-col cols="12" class="mb-5" v-if="!$store.getters['customer/id']">
+                            <v-textarea label="Additional information"
+                                        v-model="$store.getters['customer/form'].custentity_operation_notes" dense
+                                        outlined></v-textarea>
+                        </v-col>
+
                         <v-btn large block color="success" class="mb-10" elevation="7" v-if="!$store.getters['customer/id']"
-                               @click="saveNewCustomer">save new customer</v-btn>
+                               @click="saveNewCustomer">save new lead</v-btn>
 
                         <InvoiceView class="mb-10" />
 
@@ -41,7 +51,7 @@
 
         <GlobalNotificationModal />
 
-        <GlobalSpeedDial v-if="false" />
+        <GlobalSpeedDial v-show="!$store.getters['customer/id']" />
 
         <v-btn v-if="$store.getters['customer/id']" title="Go to customer page"
                color="pink" dark fixed bottom
@@ -62,10 +72,14 @@ import ContactView from "@/views/contact/Main";
 import InvoiceView from "@/views/invoices/Main";
 import ExtraInfo from "@/views/extra-info/Main";
 import GlobalSpeedDial from '@/components/GlobalSpeedDial';
+import FileDropZone from '@/components/FileDropZone.vue';
+import AddressForm from '@/views/address/AddressForm.vue';
 
 export default {
     name: 'App',
     components: {
+        AddressForm,
+        FileDropZone,
         GlobalSpeedDial,
         GlobalNotificationModal,
         CustomerView,
@@ -79,8 +93,11 @@ export default {
     },
     methods: {
         saveNewCustomer() {
-            if (this.$refs.customerView.triggerValidation())
-                this.$store.dispatch('saveNewCustomer');
+            if (!this.$refs.customerView.triggerValidation()) return;
+
+            if (this.$refs.addressForm && !this.$refs.addressForm.save()) return;
+
+            this.$store.dispatch('saveNewCustomer');
         }
     },
     computed:{

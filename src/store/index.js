@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import modules from './modules';
-import {baseURL} from '@/utils/utils.mjs';
+import {baseURL, readFileAsBase64} from '@/utils/utils.mjs';
 import http from '@/utils/http';
 
 Vue.use(Vuex)
@@ -19,12 +19,18 @@ const state = {
         persistent: true,
         isError: false
     },
+
+    imageUploader: {
+        data: [],
+        busy: false,
+    }
 };
 
 const getters = {
     globalModal : state => state.globalModal,
     testMode : state => state.testMode,
     pageTitle : state => state.pageTitle,
+    imageUploader : state => state.imageUploader,
 };
 
 const mutations = {
@@ -122,10 +128,12 @@ const actions = {
         let addressArray = JSON.parse(JSON.stringify(context.getters['addresses/all'].data));
         let contactArray = JSON.parse(JSON.stringify(context.getters['contacts/all'].data));
 
-        customerData.custentity_email_service = customerData.custentity_email_service || 'abc@abc.com';
         customerData.custentity_date_lead_entered = new Date();
+        delete customerData.entityid; // TODO: entityid must not present
 
         let customerId = await http.post('saveBrandNewCustomer', {customerData, addressArray, contactArray});
+
+        await context.dispatch('uploadImages', customerId);
 
         context.commit('displayBusyGlobalModal', {title: 'Redirecting', message: 'Saving complete. Redirecting to customer page...'});
 
@@ -134,7 +142,33 @@ const actions = {
         await context.dispatch('contacts/clearStateFromLocalStorage');
 
         top.location.href = baseURL + '/app/common/entity/custjob.nl?id=' + customerId;
-    }
+    },
+    uploadImages : async (context, customerId) => {
+        try {
+            if (context.state.imageUploader.data.length && customerId) {
+                context.commit('displayBusyGlobalModal', {title: 'Processing', message: 'Uploading file. Please wait...'});
+
+                let epochTime = new Date().getTime();
+                let dateStr = new Date().toISOString().split('T')[0].split('-').join('_');
+
+                for (const [index, data] of context.state.imageUploader.data.entries()) {
+                    let [, extension] = data.name.split('.');
+                    let base64FileContent = await readFileAsBase64(data);
+                    let fileName = `${dateStr}_${customerId}_${epochTime}_${index}.${extension}`;
+
+                    context.commit('displayBusyGlobalModal', {
+                        title: 'Processing',
+                        message: `Uploading files (${index + 1}/${context.state.imageUploader.data.length}). Please wait...`,
+                        progress: Math.ceil(((index) / context.state.imageUploader.data.length * 100))
+                    });
+
+                    await http.post('uploadImage', {base64FileContent, fileName}, {noErrorPopup: true});
+                }
+
+                context.commit('displayInfoGlobalModal', {title: 'Complete', message: 'Files are saved.'});
+            }
+        } catch (e) { console.error(e); } // TODO: report error via email
+    },
 };
 
 function _checkNetSuiteEnv() {

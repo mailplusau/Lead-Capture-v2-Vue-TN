@@ -24,9 +24,10 @@ const defaultTitle = 'Lead Capture';
 
 let NS_MODULES = {};
 
-define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file', 'N/log', 'N/record', 'N/email', 'N/runtime', 'N/https', 'N/task', 'N/format', 'N/url'],
-    (serverWidget, render, search, file, log, record, email, runtime, https, task, format, url) => {
-        NS_MODULES = {serverWidget, render, search, file, log, record, email, runtime, https, task, format, url};
+// eslint-disable-next-line no-undef
+define(['N/ui/serverWidget', 'N/render', 'N/search', 'N/file', 'N/log', 'N/record', 'N/email', 'N/runtime', 'N/https', 'N/task', 'N/format', 'N/url', 'N/encode'],
+    (serverWidget, render, search, file, log, record, email, runtime, https, task, format, url, encode) => {
+        NS_MODULES = {serverWidget, render, search, file, log, record, email, runtime, https, task, format, url, encode};
 
         const onRequest = ({request, response}) => {
             if (request.method === "GET") {
@@ -573,6 +574,22 @@ const postOperations = {
     },
 
     'saveBrandNewCustomer' : function (response, {customerData, addressArray, contactArray}) {
+        // Data preparation
+        // Set default fuel surcharges
+        customerData['custentity_service_fuel_surcharge'] = 1;
+        customerData['custentity_mpex_surcharge'] = 1;
+        customerData['custentity_service_fuel_surcharge_percen'] = fuelSurcharge.service;
+        customerData['custentity_mpex_surcharge_rate'] = fuelSurcharge.express;
+        customerData['custentity_sendle_fuel_surcharge'] = fuelSurcharge.standard;
+
+        customerData['custentity_email_service'] = customerData['custentity_email_service'] || 'abc@abc.com';
+        customerData['phone'] = customerData['phone'] || '1300656595';
+
+        customerData['custentity_invoice_method'] = 2; // Invoice method: Email (2) (default)
+        customerData['custentity18'] = true; // Exclude from batch printing
+        customerData['custentity_invoice_by_email'] = true; // Invoice by email
+        customerData['custentity_mpex_small_satchel'] = 1; // Activate MP Express Pricing
+
         // Save customer's detail
         let customerId = sharedFunctions.saveCustomerData(null, customerData);
 
@@ -589,10 +606,34 @@ const postOperations = {
         let address = addressArray[addressIndex];
         if (address) _createProductPricing(customerId, address.city, address.zip);
 
-        // Check if this is franchisee mode and send out email
         _sendEmailToSalesRep(customerId);
 
         _writeResponseJson(response, customerId);
+    },
+    'uploadImage' : function (response, {base64FileContent, fileName}) {
+        if (base64FileContent && fileName) {
+            let {file} = NS_MODULES;
+            let fileExtension = fileName.split('.').pop().toLowerCase();
+            let extensionList = {
+                png: file.Type['PNGIMAGE'],
+                jpg: file.Type['JPGIMAGE'],
+                jpeg: file.Type['JPGIMAGE'],
+                bmp: file.Type['BMPIMAGE'],
+                tiff: file.Type['TIFFIMAGE'],
+                gif: file.Type['GIFIMAGE'],
+            };
+
+            if (extensionList[fileExtension]) {
+                file.create({
+                    name: fileName,
+                    fileType: extensionList[fileExtension],
+                    contents: base64FileContent,
+                    folder: 3819984, // New Lead Photos folder
+                }).save();
+
+                _writeResponseJson(response, 'file uploaded');
+            } else _writeResponseJson(response, {error: `Extension [${fileExtension}] not support. `});
+        } else _writeResponseJson(response, {error: `no data provided`});
     }
 };
 
@@ -672,16 +713,7 @@ const sharedFunctions = {
         let isoStringRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 
         if (id) customerRecord = record.load({type: record.Type.CUSTOMER, id, isDynamic: true});
-        else { // id not present, this is a new lead
-            customerRecord = record.create({type: record.Type.LEAD});
-
-            // Set default fuel surcharges
-            customerRecord.setValue({fieldId: 'custentity_service_fuel_surcharge', value: 1}); // 1: yes, 2: no, 3: not included
-            customerRecord.setValue({fieldId: 'custentity_mpex_surcharge', value: 1}); // 1: yes, 2: no
-            customerRecord.setValue({fieldId: 'custentity_service_fuel_surcharge_percen', value: fuelSurcharge.service});
-            customerRecord.setValue({fieldId: 'custentity_mpex_surcharge_rate', value: fuelSurcharge.express});
-            customerRecord.setValue({fieldId: 'custentity_sendle_fuel_surcharge', value: fuelSurcharge.standard});
-        }
+        else customerRecord = record.create({type: record.Type.LEAD}); // id not present, this is a new lead
 
         for (let fieldId in data)
             customerRecord.setValue({fieldId, value: isoStringRegex.test(data[fieldId]) ? new Date(data[fieldId]) : data[fieldId]});
@@ -886,40 +918,53 @@ function _getProductId(carrierId, productWeightId, nsZoneId, receiverZoneId, pri
 }
 
 function _sendEmailToSalesRep(customerId) {
-    let {record} = NS_MODULES;
+    let {record, runtime} = NS_MODULES;
+    let leadSourceToExclude = [
+        231832, // Secure Cash
+        217602, // Change of Entity
+        202599, // Relocation
+        34, // AusPost - Referral
+        222553, // AusPost - Hub Transition
+        222207, // AusPost Melbourne GPO List
+        207048, // NeoPost
+    ]
+
+    // don't send if role is Admin or DataAdmin
+    if ([3, 1032].includes(runtime['getCurrentUser']().role)) return;
+
     let customerRecord = record.load({type: 'customer', id: customerId});
+
+    // don't send if lead source is in the exclusion list
+    if (leadSourceToExclude.includes(parseInt(customerRecord.getValue({fieldId: 'leadsource'})))) return;
+
     let franchiseesNote = customerRecord.getValue({fieldId: 'custentity_operation_notes'});
     let customerStatus = parseInt(customerRecord.getValue({fieldId: 'entitystatus'}));
 
-    // if current user's role is Franchisee (1000)
-    if (parseInt(NS_MODULES.runtime['getCurrentUser']().role) === 1000) {
-        let franchiseeRecord = record.load({type: 'partner', id: customerRecord.getValue({fieldId: 'partner'})});
-        let employeeRecord = record.load({type: 'employee', id: customerRecord.getValue({fieldId: 'custentity_mp_toll_salesrep'})});
+    let franchiseeRecord = record.load({type: 'partner', id: customerRecord.getValue({fieldId: 'partner'})});
+    let employeeRecord = record.load({type: 'employee', id: customerRecord.getValue({fieldId: 'custentity_mp_toll_salesrep'})});
 
-        let customerLink = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + customerId;
-        let customerName = customerRecord.getValue({fieldId: 'entityid'}) + ' ' + customerRecord.getValue({fieldId: 'companyname'});
-        let emailBody = '';
+    let customerLink = 'https://1048144.app.netsuite.com/app/common/entity/custjob.nl?id=' + customerId;
+    let customerName = customerRecord.getValue({fieldId: 'entityid'}) + ' ' + customerRecord.getValue({fieldId: 'companyname'});
+    let emailBody = '';
 
-        emailBody += 'A Hot Lead has been entered by franchisee ' + franchiseeRecord.getValue({fieldId: 'companyname'});
-        emailBody += 'Customer Name: ' + customerName + '<br>';
-        emailBody += '<a href="' + customerLink + '" target="_blank">' + customerLink + '</a><br><br>'
-        emailBody += franchiseesNote ? `Franchisee's note: ${franchiseesNote}<br>` : '';
+    emailBody += 'A Hot Lead has been entered by franchisee ' + franchiseeRecord.getValue({fieldId: 'companyname'});
+    emailBody += 'Customer Name: ' + customerName + '<br>';
+    emailBody += '<a href="' + customerLink + '" target="_blank">' + customerLink + '</a><br><br>'
+    emailBody += franchiseesNote ? `Franchisee's note: ${franchiseesNote}<br>` : '';
 
-        if ([57, 6].includes(customerStatus)) { // Suspect - New (6) or Suspect - Hot Lead (57)
-            // Change the recipient based on the status
-            let subject = `Sales ${customerStatus === 57 ? 'HOT' : 'NEW'} Lead - Zee Generated - ${customerName}`;
-            let recipients = customerStatus === 57 ? [employeeRecord.getValue({fieldId: 'email'})] : ['matthew.rajabi@mailplus.com.au'];
+    if ([57, 6].includes(customerStatus)) { // Suspect - New (6) or Suspect - Hot Lead (57)
+        // Change the recipient based on the status
+        let subject = `Sales ${customerStatus === 57 ? 'HOT' : 'NEW'} Lead - Zee Generated - ${customerName}`;
 
-            NS_MODULES.email.send({
-                author: 112209,
-                subject,
-                body: emailBody,
-                recipients,
-                cc: ['luke.forbes@mailplus.com.au'],
-                relatedRecords: {
-                    entityId: customerId
-                }
-            });
-        }
+        NS_MODULES.email.send({
+            author: 112209,
+            subject,
+            body: emailBody,
+            recipients: ['matthew.rajabi@mailplus.com.au'],
+            cc: ['luke.forbes@mailplus.com.au', employeeRecord.getValue({fieldId: 'email'})],
+            relatedRecords: {
+                entityId: customerId
+            }
+        });
     }
 }

@@ -7,10 +7,10 @@
                 </v-col>
 
                 <v-col cols="4" v-show="customerId">
-                    <v-text-field dense label="Internal ID" :value="customerId" disabled></v-text-field>
+                    <v-text-field dense label="Internal ID" :value="form.entityid" disabled></v-text-field>
                 </v-col>
 
-                <v-col :cols="franchiseeMode ? 6 : 8">
+                <v-col v-if="!franchiseeMode" :cols="8">
                     <v-text-field dense v-if="franchiseeMode" label="Account Manager"
                                   :value="$store.getters['user/salesRep'].name" disabled></v-text-field>
                     <v-autocomplete dense v-else label="Account Manager" :disabled="franchiseeMode || formDisabled || formBusy"
@@ -20,7 +20,7 @@
                     ></v-autocomplete>
                 </v-col>
 
-                <v-col cols="6">
+                <v-col :cols="franchiseeMode ? 12 : 6">
                     <v-text-field dense label="Company Name" v-model="form.companyname"
                                   :rules="[v => validate(v, 'required|minLength:5')]"
                     ></v-text-field>
@@ -47,17 +47,17 @@
 
                 <v-col cols="6">
                     <v-text-field dense label="Day-to-day email" v-model="form.custentity_email_service"
-                                  :rules="[v => validate(v, franchiseeMode ? 'email' : 'required|email')]"
+                                  :rules="[v => validate(v, 'email')]"
                     ></v-text-field>
                 </v-col>
 
                 <v-col cols="6">
                     <v-text-field dense label="Day-to-day phone" v-model="form.phone"
-                                  :rules="[v => validate(v, 'required|ausPhone')]"
+                                  :rules="[v => validate(v, 'ausPhone')]"
                     ></v-text-field>
                 </v-col>
 
-                <v-col cols="6">
+                <v-col cols="6" v-if="!franchiseeMode">
                     <v-autocomplete dense label="Franchisee" :disabled="franchiseeMode || formDisabled || formBusy"
                                     v-model="form.partner"
                                     :items="$store.getters['misc/franchisees']"
@@ -65,7 +65,7 @@
                     ></v-autocomplete>
                 </v-col>
 
-                <v-col cols="6">
+                <v-col cols="6" v-if="!franchiseeMode">
                     <v-autocomplete dense label="Lead Source" :disabled="franchiseeMode || formDisabled || formBusy"
                                     v-model="form.leadsource"
                                     :items="$store.getters['misc/leadSources']"
@@ -105,24 +105,6 @@
                                     :items="$store.getters['misc/statuses']"
                                     :rules="[v => validate(v, 'required')]"
                     ></v-autocomplete>
-                </v-col>
-
-                <v-col cols="6">
-                    <v-checkbox v-model="brochureHandedOver" @change="handleCheckboxChange" dense
-                        label="Brochure handed over"
-                    ></v-checkbox>
-                </v-col>
-
-                <v-col cols="6">
-                    <v-checkbox v-model="expectingCall" @change="handleCheckboxChange" dense
-                        label="Expecting a call to discuss service"
-                    ></v-checkbox>
-                </v-col>
-
-                <v-col cols="12" v-if="franchiseeMode">
-                    <v-textarea label="Reason for why this is lead" v-model="form.custentity_operation_notes" dense
-                                :rules="[v => validate(v, !brochureHandedOver && !expectingCall ? 'required' : '')]"
-                                outlined></v-textarea>
                 </v-col>
 
                 <v-col cols="12" class="text-center" v-if="customerId">
@@ -174,15 +156,6 @@ export default {
         allowOnlyNumericalInput,
         resetValidation () {
             this.$refs.form.resetValidation()
-        },
-        handleCheckboxChange() {
-            if (this.franchiseeMode) {
-                if (this.brochureHandedOver || this.expectingCall)
-                    this.form.entitystatus = 57; // SUSPECT-Hot Lead
-                else
-                    this.form.entitystatus = 6; // SUSPECT-New
-            }
-            this.$refs.form.validate();
         },
         handleLeadSourceChanged(newValue) {
             // show these fields when lead source is Change of Entity or Relocation
@@ -239,22 +212,6 @@ export default {
         },
         formDisabled() {
             return this.$store.getters['customer/form'].disabled;
-        },
-        brochureHandedOver: {
-            get() {
-                return parseInt(this.form.custentity_brochure_handed_over) === 1;
-            },
-            set(val) {
-                this.form.custentity_brochure_handed_over = val ? 1 : 2;
-            }
-        },
-        expectingCall: {
-            get() {
-                return parseInt(this.form.custentity_expecting_call) === 1;
-            },
-            set(val) {
-                this.form.custentity_expecting_call = val ? 1 : 2;
-            }
         },
     },
 };
