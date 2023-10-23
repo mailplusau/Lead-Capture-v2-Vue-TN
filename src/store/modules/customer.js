@@ -32,7 +32,7 @@ const actions = {
     init : async context => {
         await context.dispatch('getDetails');
 
-        _checkFranchiseeMode(context);
+        _setDefaultFormValues(context);
 
         _updateFormTitleAndHeader(context);
 
@@ -132,14 +132,21 @@ function _updateFormTitleAndHeader(context) {
     context.commit('setPageTitle', header, {root: true});
 }
 
-function _checkFranchiseeMode(context) {
-    if (!context.rootGetters['user/isFranchisee']) return;
+function _setDefaultFormValues(context) {
+    if (context.state.id) return; // don't run this if customer id is provided
 
-    context.state.form.data.partner = `${context.rootGetters['user/id']}`;
-    context.state.form.data.custentity_mp_toll_salesrep = context.rootGetters['user/salesRep'].id; // Sales Rep ID
-    context.state.form.data.leadsource = '-4'; // Franchisee Generated
-    context.state.form.data.custentity_industry_category = `${19}`; // Others
-    context.state.form.data.entitystatus = 6; // SUSPECT-New
+    if (context.rootGetters['user/isFranchisee']) {
+        context.state.form.data.partner = `${context.rootGetters['user/id']}`;
+        context.state.form.data.custentity_mp_toll_salesrep = context.rootGetters['user/salesRep'].id; // Sales Rep ID
+        context.state.form.data.leadsource = '-4'; // Franchisee Generated
+        context.state.form.data.custentity_industry_category = `${19}`; // Others
+        context.state.form.data.entitystatus = 6; // SUSPECT-New
+    }
+
+    if (context.rootGetters['user/id'] === 1777309) {
+        context.state.form.data['leadsource'] = '282094';
+    }
+
 }
 
 export default {

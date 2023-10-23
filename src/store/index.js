@@ -6,6 +6,8 @@ import http from '@/utils/http';
 
 Vue.use(Vuex)
 
+let newCustomerId = null;
+
 const state = {
     pageTitle: 'Prospect Capture Form',
     testMode: false,
@@ -17,7 +19,8 @@ const state = {
         busy: false,
         progress: -1,
         persistent: true,
-        isError: false
+        isError: false,
+        buttons: [],
     },
 
     imageUploader: {
@@ -42,8 +45,9 @@ const mutations = {
         state.globalModal.progress = -1;
         state.globalModal.persistent = false;
         state.globalModal.isError = false;
+        state.globalModal.buttons.splice(0);
     },
-    displayErrorGlobalModal: (state, {title, message}) => {
+    displayErrorGlobalModal: (state, {title, message, buttons = []}) => {
         state.globalModal.title = title;
         state.globalModal.body = message;
         state.globalModal.busy = false;
@@ -51,8 +55,9 @@ const mutations = {
         state.globalModal.progress = -1;
         state.globalModal.persistent = true;
         state.globalModal.isError = true;
+        state.globalModal.buttons = [...buttons];
     },
-    displayBusyGlobalModal: (state, {title, message, open = true, progress = -1}) => {
+    displayBusyGlobalModal: (state, {title, message, open = true, progress = -1, buttons = []}) => {
         state.globalModal.title = title;
         state.globalModal.body = message;
         state.globalModal.busy = open;
@@ -60,8 +65,9 @@ const mutations = {
         state.globalModal.progress = progress;
         state.globalModal.persistent = true;
         state.globalModal.isError = false;
+        state.globalModal.buttons = [...buttons];
     },
-    displayInfoGlobalModal: (state, {title, message, persistent = false}) => {
+    displayInfoGlobalModal: (state, {title, message, persistent = false, buttons = []}) => {
         state.globalModal.title = title;
         state.globalModal.body = message;
         state.globalModal.busy = false;
@@ -69,6 +75,7 @@ const mutations = {
         state.globalModal.progress = -1;
         state.globalModal.persistent = persistent;
         state.globalModal.isError = false;
+        state.globalModal.buttons = [...buttons];
     },
 
     setPageTitle: (state, title = 'Lead Capture') => {
@@ -83,6 +90,7 @@ const actions = {
     addShortcut : () => {
         parent?.window?.addShortcut()
     },
+    testAction : () => { console.log('test'); },
     init : async context => {
         if (!_checkNetSuiteEnv()) return;
 
@@ -133,9 +141,11 @@ const actions = {
 
         let customerId = await http.post('saveBrandNewCustomer', {customerData, addressArray, contactArray});
 
+        context.commit('displayBusyGlobalModal', {title: 'Processing', message: 'Uploading images. Please wait...'});
+
         await context.dispatch('uploadImages', customerId);
 
-        context.commit('displayBusyGlobalModal', {title: 'Redirecting', message: 'Saving complete. Redirecting to customer page...'});
+        context.commit('displayBusyGlobalModal', {title: 'Processing', message: 'Cleaning up. Please wait...'});
 
         await context.dispatch('customer/clearStateFromLocalStorage');
         await context.dispatch('addresses/clearStateFromLocalStorage');
@@ -148,7 +158,18 @@ const actions = {
             role: context.getters['user/role'],
         }, {noErrorPopup: true})
 
-        top.location.href = baseURL + '/app/common/entity/custjob.nl?id=' + customerId;
+        newCustomerId = customerId;
+
+        context.commit('displayInfoGlobalModal', {
+            title: 'Saving complete',
+            message: 'A new lead has been created. What would you like to do?',
+            persistent: true,
+            buttons: [
+                {color: 'green darken-1', text: 'Enter Another Lead', action: 'dlgActionReload'},
+                'spacer',
+                {color: 'green darken-1', text: 'View new Lead\'s record', action: 'dlgActionViewRecord'},
+            ]
+        })
     },
     uploadImages : async (context, customerId) => {
         try {
@@ -176,6 +197,13 @@ const actions = {
             }
         } catch (e) { console.error(e); } // TODO: report error via email
     },
+
+    dlgActionReload : () => {
+        top.location.reload();
+    },
+    dlgActionViewRecord : () => {
+        if (newCustomerId) top.location.href = baseURL + '/app/common/entity/custjob.nl?id=' + newCustomerId;
+    }
 };
 
 function _checkNetSuiteEnv() {
