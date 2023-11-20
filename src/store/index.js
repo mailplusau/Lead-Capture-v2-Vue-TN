@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import modules from './modules';
-import {baseURL, readFileAsBase64} from '@/utils/utils.mjs';
+import {baseURL, getTodayDate, readFileAsBase64} from '@/utils/utils.mjs';
 import http from '@/utils/http';
 
 Vue.use(Vuex)
@@ -136,7 +136,7 @@ const actions = {
         let addressArray = JSON.parse(JSON.stringify(context.getters['addresses/all'].data));
         let contactArray = JSON.parse(JSON.stringify(context.getters['contacts/all'].data));
 
-        customerData.custentity_date_lead_entered = new Date();
+        customerData.custentity_date_lead_entered = getTodayDate();
         delete customerData.entityid; // TODO: entityid must not present
 
         let customerId = await http.post('saveBrandNewCustomer', {customerData, addressArray, contactArray});

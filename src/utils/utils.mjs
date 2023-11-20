@@ -143,6 +143,10 @@ export const rules = {
     }
 }
 
+export function getTodayDate() {
+    return new Date(new Date().setHours(new Date().getTimezoneOffset()/-60, 0, 0))
+}
+
 export function readFileAsBase64(fileObject) {
     return new Promise((resolve, reject) => {
         if (!fileObject) resolve(null);
