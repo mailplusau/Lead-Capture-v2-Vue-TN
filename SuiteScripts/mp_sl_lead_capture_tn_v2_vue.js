@@ -745,6 +745,10 @@ const sharedFunctions = {
             isDynamic: true
         });
 
+        // Safeguard against cases where country is blank which can prevent the record from being saved
+        if (Object.hasOwnProperty.call(addressData, 'country') && !addressData['country'])
+            addressData['country'] = 'AU';
+
         // Select an existing or create a new line the customerRecord's sublist
         if (addressData.internalid) { // Edit existing address
             let line = customerRecord.findSublistLineWithValue({sublistId: 'addressbook', fieldId: 'internalid', value: addressData.internalid});
@@ -756,7 +760,7 @@ const sharedFunctions = {
         // Fill the sublist's fields using property names of VARS.addressSublistFields as reference
         for (let fieldId in VARS.addressSublistFields) {
             if (fieldId === 'internalid') continue; // we skip over internalid, not sure if this is necessary
-            if (addressData[fieldId])
+            if (Object.hasOwnProperty.call(addressData, fieldId))
                 customerRecord.setCurrentSublistValue({sublistId: 'addressbook', fieldId, value: addressData[fieldId]});
         }
 
@@ -765,7 +769,7 @@ const sharedFunctions = {
 
         // Fill the subrecord's fields using property names of VARS.addressFields as reference
         for (let fieldId in VARS.addressFields)
-            if (addressData[fieldId]) addressSubrecord.setValue({fieldId, value: addressData[fieldId]});
+            if (Object.hasOwnProperty.call(addressData, fieldId)) addressSubrecord.setValue({fieldId, value: addressData[fieldId]});
 
         // Commit the line
         customerRecord.commitLine({sublistId: 'addressbook'});
