@@ -592,6 +592,9 @@ const postOperations = {
         customerData['custentity_invoice_by_email'] = true; // Invoice by email
         customerData['custentity_mpex_small_satchel'] = 1; // Activate MP Express Pricing
 
+        if (NS_MODULES.runtime['getCurrentUser']().role !== 1000) // only set this field when the user is not a franchisee
+            customerData['custentity_lead_entered_by'] = NS_MODULES.runtime['getCurrentUser']().id;
+
         // Save customer's detail
         let customerId = sharedFunctions.saveCustomerData(null, customerData);
 
