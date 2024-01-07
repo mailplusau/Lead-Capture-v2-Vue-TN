@@ -143,8 +143,8 @@ function _setDefaultFormValues(context) {
         context.state.form.data.entitystatus = 6; // SUSPECT-New
     }
 
-    if (context.rootGetters['user/id'] === 1777309) {
-        context.state.form.data['leadsource'] = '282094';
+    if (context.rootGetters['user/id'] === 1797389) { // If user is Gabby (1797389)
+        context.state.form.data['leadsource'] = '282094'; // Sales Coordinator Generated
     }
 
 }
