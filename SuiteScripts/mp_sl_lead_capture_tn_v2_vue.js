@@ -731,7 +731,7 @@ const sharedFunctions = {
                 id: data['custentity_old_customer'],
             });
 
-            oldCustomerRecord.setValue({fieldId: 'custentity_new_customer', value: id});
+            oldCustomerRecord.setValue({fieldId: 'custentity_new_customer', value: customerId});
             oldCustomerRecord.setValue({fieldId: 'custentity_new_zee', value: data['partner']});
 
             oldCustomerRecord.save({ignoreMandatoryFields: true});
