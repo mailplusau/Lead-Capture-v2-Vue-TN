@@ -876,6 +876,29 @@ function _createProductPricing(customerId, city, postcode) {
         expressProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_pricing_plan', value: 15});
         expressProductPricingRecord.save({ignoreMandatoryFields: true});
     }
+
+    try {
+        // Create Premium Product Pricing
+        let itemInternalPremium10kg = _getProductId(9, PRODUCTS.W_10KG, null, null, 17);
+        let itemInternalPremium20kg = _getProductId(9, PRODUCTS.W_20KG, null, null, 17);
+        let itemInternalPremium1kg = _getProductId(9, PRODUCTS.W_1KG, null, null, 17);
+        let itemInternalPremium3kg = _getProductId(9, PRODUCTS.W_3KG, null, null, 17);
+        let itemInternalPremium5kg = _getProductId(9, PRODUCTS.W_5KG, null, null, 17);
+
+        let premiumProductPricingRecord = record.create({type: 'customrecord_product_pricing'});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_last_update', value: new Date()});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_customer', value: customerId});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_delivery_speeds', value: 4});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_10kg', value: itemInternalPremium10kg});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_20kg', value: itemInternalPremium20kg});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_1kg', value: itemInternalPremium1kg});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_3kg', value: itemInternalPremium3kg});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_5kg', value: itemInternalPremium5kg});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_status', value: 2});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_sycn_complete', value: 2});
+        premiumProductPricingRecord.setValue({fieldId: 'custrecord_prod_pricing_pricing_plan', value: 17});
+        premiumProductPricingRecord.save({ignoreMandatoryFields: true});
+    } catch (e) { NS_MODULES.log.error('_createProductPricing: Premium Product Pricing', e); }
 }
 
 function _getNSZoneId(city, postcode) {
