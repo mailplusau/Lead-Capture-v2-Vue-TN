@@ -33,7 +33,7 @@
 
                         <v-col cols="12" class="mb-5" v-if="!$store.getters['customer/id']">
                             <v-textarea label="Additional information"
-                                        v-model="$store.getters['customer/form'].custentity_operation_notes" dense
+                                        v-model="$store.getters['customer/form'].data.custentity_operation_notes" dense
                                         outlined></v-textarea>
                         </v-col>
 
