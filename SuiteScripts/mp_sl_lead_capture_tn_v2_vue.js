@@ -556,22 +556,7 @@ const postOperations = {
         _writeResponseJson(response, 'Contact Delete!');
     },
     'createUserNote' : function (response, {customerId, noteData}) {
-        let {record, runtime} = NS_MODULES;
-
-        let userNoteRecord = record.create({
-            type: record.Type['NOTE'],
-        });
-
-        noteData.entity = customerId;
-        noteData.author = runtime['getCurrentUser']().id;
-        noteData.notedate = new Date();
-
-        for (let fieldId in noteData)
-            userNoteRecord.setValue({fieldId, value: noteData[fieldId]});
-
-        let noteId = userNoteRecord.save({ignoreMandatoryFields: true});
-
-        _writeResponseJson(response, noteId);
+        _writeResponseJson(response, sharedFunctions.createUserNote(customerId, NS_MODULES.runtime['getCurrentUser']().id, noteData));
     },
 
     'saveBrandNewCustomer' : function (response, {customerData, addressArray, contactArray}) {
@@ -597,6 +582,20 @@ const postOperations = {
 
         // Save customer's detail
         let customerId = sharedFunctions.saveCustomerData(null, customerData);
+
+        // Take the field custentity_operation_notes and create a User Note to make it easier for sales team to see.
+        if (customerData['custentity_operation_notes']) // only do this if the field exist
+            sharedFunctions.createUserNote(customerId, NS_MODULES.runtime['getCurrentUser']().id, {
+                // the 3 following fields will be autofilled
+                entity: null, // Customer ID that this belongs to
+                notedate: null, // Date Create
+                author: null, // Author of this note
+
+                direction: 1, // Incoming (1)
+                notetype: 7, // Note (7)
+                note: customerData['custentity_operation_notes'], // Message in the note
+                title: 'Note from franchisee', // Note's title
+            })
 
         // Save address
         for (let addressData of addressArray)
@@ -712,6 +711,22 @@ const sharedFunctions = {
         return data;
     },
 
+    createUserNote(customerId, authorId, noteData) {
+        let {record} = NS_MODULES;
+
+        let userNoteRecord = record.create({
+            type: record.Type['NOTE'],
+        });
+
+        noteData.entity = customerId;
+        noteData.author = authorId;
+        noteData.notedate = new Date();
+
+        for (let fieldId in noteData)
+            userNoteRecord.setValue({fieldId, value: noteData[fieldId]});
+
+        return userNoteRecord.save({ignoreMandatoryFields: true});
+    },
     saveCustomerData(id, data) {
         let {record} = NS_MODULES;
         let customerRecord;
