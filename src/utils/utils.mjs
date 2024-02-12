@@ -34,7 +34,7 @@ export const VARS = {
             custentity_invoice_by_email: true, // Invoice by email
             custentity18: true, // EXCLUDE FROM BATCH PRINTING
 
-            custentity_operation_notes: '',
+            custentity_operation_notes: '', // Note from the franchisee for this lead
         },
         extraInfoFields: {
             custentity_invoice_method: null, // Invoice method
@@ -207,13 +207,17 @@ export function setObjectInArray(array, index, newObj) {
 }
 
 export function allowOnlyNumericalInput(evt) {
-    // evt = (evt) ? evt : window.event;
-    let expect = evt.target.value.toString() + evt.key.toString();
+    if ((evt.key === 'a' || evt.key === 'c' || evt.key === 'v') && evt.ctrlKey) // allow select all and copy
+        return true;
 
     // if (!/^[-+]?[0-9]*?[0-9]*$/.test(expect)) // Allow only 1 leading + sign and numbers
-    if (!/^[0-9]*$/.test(expect)) // Allow only numbers
+    if (!/^[0-9]*$/.test(evt.key) && evt.key.length === 1) // Allow only numbers, assuming evt.key is a string
         evt.preventDefault();
     else return true;
+}
+
+export function keepOnlyNumericalCharacters(value) {
+    return value.replace(/\D/g, '');
 }
 
 export function debounce(fn, wait){

@@ -27,8 +27,10 @@
                 </v-col>
 
                 <v-col cols="6" v-if="!franchiseeMode">
-                    <v-text-field dense label="ABN" v-model="form.vatregnumber"
-                                  @keypress="allowOnlyNumericalInput"
+                    <v-text-field dense label="ABN"
+                                  :value="form.vatregnumber"
+                                  @input="v => {form.vatregnumber = keepOnlyNumericalCharacters(v)}"
+                                  @keydown="allowOnlyNumericalInput"
                                   :rules="[v => validate(v, 'abn')]"
                     ></v-text-field>
                 </v-col>
@@ -40,7 +42,10 @@
                 </v-col>
 
                 <v-col cols="6" v-if="!franchiseeMode">
-                    <v-text-field dense label="Account (main) phone" v-model="form.altphone"
+                    <v-text-field dense label="Account (main) phone"
+                                  :value="form.altphone"
+                                  @input="v => {form.altphone = keepOnlyNumericalCharacters(v)}"
+                                  @keydown="allowOnlyNumericalInput"
                                   :rules="[v => validate(v, 'ausPhone')]"
                     ></v-text-field>
                 </v-col>
@@ -52,7 +57,10 @@
                 </v-col>
 
                 <v-col cols="6">
-                    <v-text-field dense label="Day-to-day phone" v-model="form.phone"
+                    <v-text-field dense label="Day-to-day phone"
+                                  :value="form.phone"
+                                  @input="v => {form.phone = keepOnlyNumericalCharacters(v)}"
+                                  @keydown="allowOnlyNumericalInput"
                                   :rules="[v => validate(v, 'ausPhone')]"
                     ></v-text-field>
                 </v-col>
@@ -134,7 +142,7 @@
 </template>
 
 <script>
-import {allowOnlyNumericalInput, debounce, rules} from '@/utils/utils.mjs';
+import {allowOnlyNumericalInput, keepOnlyNumericalCharacters, debounce, rules} from '@/utils/utils.mjs';
 
 export default {
     name: "Main",
@@ -167,6 +175,7 @@ export default {
     methods: {
         validate: rules.validate,
         allowOnlyNumericalInput,
+        keepOnlyNumericalCharacters,
         resetValidation () {
             this.$refs.form.resetValidation()
         },
