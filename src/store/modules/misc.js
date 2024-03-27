@@ -52,7 +52,25 @@ const state = {
 
 const getters = {
     industries : state => state.industries,
-    leadSources : state => state.leadSources,
+    leadSources : (state, getters, rootState, rootGetters) => {
+        let rolesToRestrict = [
+            1062, // Account Managers
+            1063, // Lead Generation
+            1064, // Lead Qualification
+            1005, // Business Development Manager
+        ];
+        let leadSourcesToShow = [
+            282051, // LPO - Head Office Generated
+            282083, // LPO - AP Customer
+            282085, // LPO - Inbound Web
+            281559, // LPO - Transition
+            285297, // Inbound - Head Office Generated
+            99417, // Inbound - Web
+            97943, // HO Generated
+        ]
+
+        return state.leadSources.filter(item => rolesToRestrict.includes(rootGetters['user/role']) ? leadSourcesToShow.includes(parseInt(item.value)) : true);
+    },
     franchisees : state => state.franchisees.filter(item => item.text.toLowerCase().substring(0, 4) !== 'old '), // filter out franchisees with name starting with 'old'
     roles : state => state.roles,
     statuses : state => state.statuses,
