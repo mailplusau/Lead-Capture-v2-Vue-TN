@@ -561,6 +561,7 @@ const postOperations = {
     },
 
     'saveBrandNewCustomer' : function (response, {customerData, addressArray, contactArray}) {
+        let user = NS_MODULES.runtime['getCurrentUser']();
         // Data preparation
         // Set default fuel surcharges
         customerData['custentity_service_fuel_surcharge'] = 1;
@@ -578,15 +579,15 @@ const postOperations = {
         customerData['custentity_invoice_by_email'] = true; // Invoice by email
         customerData['custentity_mpex_small_satchel'] = 1; // Activate MP Express Pricing
 
-        if (NS_MODULES.runtime['getCurrentUser']().role !== 1000) // only set this field when the user is not a franchisee
-            customerData['custentity_lead_entered_by'] = NS_MODULES.runtime['getCurrentUser']().id;
+        if (user.role !== 1000) // only set this field when the user is not a franchisee
+            customerData['custentity_lead_entered_by'] = user.id;
 
         // Save customer's detail
         let customerId = sharedFunctions.saveCustomerData(null, customerData);
 
         // Take the field custentity_operation_notes and create a User Note to make it easier for sales team to see.
         if (customerData['custentity_operation_notes']) // only do this if the field exist
-            sharedFunctions.createUserNote(customerId, NS_MODULES.runtime['getCurrentUser']().id, {
+            sharedFunctions.createUserNote(customerId, user.id, {
                 // the 3 following fields will be autofilled
                 entity: null, // Customer ID that this belongs to
                 notedate: null, // Date Create
@@ -595,7 +596,7 @@ const postOperations = {
                 direction: 1, // Incoming (1)
                 notetype: 7, // Note (7)
                 note: customerData['custentity_operation_notes'], // Message in the note
-                title: 'Note from franchisee', // Note's title
+                title: user.role === 1000 ? 'Note from franchisee' : `${user.name} - Notes`, // Note's title
             })
 
         // Save address
